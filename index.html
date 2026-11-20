@@ -241,7 +241,7 @@ function parseJSONLoose(t){t=t.trim().replace(/^```(?:json)?/i,"").replace(/```$
    Leave them empty to run QualiTrack in single-user mode, saving only in this browser. */
 const QT_CONFIG={
   supabaseUrl:"https://zehsmqoiqhqmkdssxgqf.supabase.co",
-  supabaseAnonKey:"",   // ← PASTE the "anon public" key here (Supabase → Settings → API Keys → Legacy → anon → Copy)
+  supabaseAnonKey:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InplaHNtcW9pcWhxbWtkc3N4Z3FmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTUxNjg0MzUsImV4cCI6MjExMDc0NDQzNX0.aqs1MJ5HA51VSewxyqLZFnnIzMvDc_QB65CGEfKPZA0",   // public "anon" key (safe to publish; data is protected by row-level security)
   provider:"azure"      // Microsoft sign-in
 };
 const CLOUD=!!(QT_CONFIG.supabaseUrl&&QT_CONFIG.supabaseAnonKey);
