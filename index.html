@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QualiTrack</title>
+<style>
+:root{
+  --bg:#f5f6fa;--surface:#ffffff;--surface2:#f0f2f7;--text:#1a1f2e;--muted:#5b6476;--border:#dce0e9;
+  --accent:#1f5fbf;--accent-ink:#fff;--accent-soft:#e5edfb;
+  --ok:#1b7548;--ok-soft:#e1f3e8;--warn:#9a5a00;--warn-soft:#fcefd9;--bad:#b02236;--bad-soft:#fbe4e8;
+  --new:#3d5bd9;--new-soft:#e7ebfd;--shadow:0 1px 2px rgba(20,30,60,.06),0 4px 14px rgba(20,30,60,.05);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#12151c;--surface:#1a1e28;--surface2:#222736;--text:#e6e9f0;--muted:#9aa3b5;--border:#2e3546;
+  --accent:#6e9cf0;--accent-ink:#0d1220;--accent-soft:#1f2b45;
+  --ok:#5fcf93;--ok-soft:#173528;--warn:#f0b35a;--warn-soft:#3a2c14;--bad:#f07a8a;--bad-soft:#3d1c22;
+  --new:#94a8ff;--new-soft:#232b4d;--shadow:none;color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#12151c;--surface:#1a1e28;--surface2:#222736;--text:#e6e9f0;--muted:#9aa3b5;--border:#2e3546;
+  --accent:#6e9cf0;--accent-ink:#0d1220;--accent-soft:#1f2b45;
+  --ok:#5fcf93;--ok-soft:#173528;--warn:#f0b35a;--warn-soft:#3a2c14;--bad:#f07a8a;--bad-soft:#3d1c22;
+  --new:#94a8ff;--new-soft:#232b4d;--shadow:none;color-scheme:dark;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+a{color:var(--accent)}
+header.top{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:20}
+.top-inner{max-width:1280px;margin:0 auto;padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;font-size:17px;margin-right:auto}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.savestate{font-size:12px;color:var(--muted)}
+nav.steps{max-width:1280px;margin:0 auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto}
+nav.steps button{border:0;background:none;color:var(--muted);padding:10px 12px;font:inherit;font-weight:600;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav.steps button.active{color:var(--accent);border-bottom-color:var(--accent)}
+nav.steps .num{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--surface2);font-size:12px;margin-right:6px}
+nav.steps button.active .num{background:var(--accent);color:var(--accent-ink)}
+main{max-width:1280px;margin:0 auto;padding:20px 16px 60px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:var(--shadow);margin-bottom:16px}
+.card h2{margin:0 0 4px;font-size:18px}
+.card h3{margin:0 0 8px;font-size:16px}
+.sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:860px){.grid2{grid-template-columns:1fr}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+input[type=text],input[type=password],input[type=search],select,textarea{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;min-width:0}
+textarea{resize:vertical;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+.btn{font:inherit;font-weight:600;font-size:14px;border-radius:8px;padding:8px 14px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.icon-btn{border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px 6px;border-radius:6px}
+.icon-btn:hover{background:var(--surface2);color:var(--bad)}
+ol.howto{margin:0 0 12px;padding-left:20px}ol.howto li{margin:4px 0}
+.note{background:var(--accent-soft);border-radius:8px;padding:10px 12px;font-size:14px}
+.note.warn{background:var(--warn-soft)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:5px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--text)}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);padding:8px 6px;border-bottom:1px solid var(--border);background:var(--surface2)}
+table.t td{padding:6px;border-bottom:1px solid var(--border);vertical-align:top}
+table.t textarea{min-height:38px;padding:6px 8px;font-size:14px}
+table.t input[type=text]{width:100%}
+.tablewrap{overflow-x:auto}
+.layout-fb{display:grid;grid-template-columns:260px 1fr;gap:16px}
+@media (max-width:860px){.layout-fb{grid-template-columns:1fr}}
+.clist{display:flex;flex-direction:column;gap:4px;max-height:70vh;overflow:auto}
+.citem{text-align:left;border:1px solid transparent;background:none;border-radius:8px;padding:8px 10px;cursor:pointer;font:inherit;color:var(--text)}
+.citem:hover{background:var(--surface2)}
+.citem.on{background:var(--accent-soft);border-color:var(--accent)}
+.citem .code{font-weight:700;font-size:14px}
+.citem .nm{font-size:12px;color:var(--muted);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dots{display:flex;gap:4px;margin-top:3px}
+.dot{font-size:11px;border-radius:4px;padding:0 5px;background:var(--surface2);color:var(--muted)}
+.dot.has{background:var(--ok-soft);color:var(--ok)}
+.badge{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.b-New{background:var(--new-soft);color:var(--new)}
+.b-Repeated{background:var(--warn-soft);color:var(--warn)}
+.b-Persistent{background:var(--bad-soft);color:var(--bad)}
+.b-Resolved{background:var(--ok-soft);color:var(--ok)}
+.b-muted{background:var(--surface2);color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px}
+.stat{background:var(--surface2);border-radius:10px;padding:12px}
+.stat .v{font-size:26px;font-weight:700;line-height:1.1}
+.stat .l{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.bar{display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--surface2);min-width:120px}
+.bar span{display:block;height:100%}
+.match{font-size:13px;background:var(--surface2);border-radius:6px;padding:4px 7px;margin-bottom:4px}
+.match b{font-size:11px;color:var(--muted)}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.hidden{display:none!important}
+.progress{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden}
+.progress>div{height:100%;background:var(--accent);width:0;transition:width .3s}
+.modal-bg{position:fixed;inset:0;background:rgba(10,14,24,.5);display:flex;align-items:flex-start;justify-content:center;z-index:50;padding:40px 16px;overflow:auto}
+.modal{background:var(--surface);border-radius:12px;max-width:1000px;width:100%;padding:20px;border:1px solid var(--border)}
+.modal h3{margin-top:0}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:60;font-size:14px;max-width:90vw;box-shadow:var(--shadow)}
+.drop{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;color:var(--muted);font-size:14px}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.kv{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.section-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+ul.recs{margin:6px 0 0;padding-left:20px}
+body.ro .edit-only{display:none!important}
+@media print{
+  header.top,nav.steps,.noprint,.btn{display:none!important}
+  body{background:#fff;color:#000}
+  .card{box-shadow:none;border:1px solid #ccc;break-inside:avoid}
+  main{padding:0}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">QualiTrack<small id="hdrCtx">Course feedback &amp; action tracker</small></div>
+    <span class="savestate" id="saveState">Not saved yet</span>
+    <span id="userBox" class="small"></span>
+    <button class="btn sm edit-only" id="hdrImport" title="Load a JSON file saved earlier">⬆ Import JSON</button>
+    <button class="btn sm primary" id="hdrExport" title="Download all work as a JSON file">⬇ Export JSON</button>
+  </div>
+  <nav class="steps" id="steps"></nav>
+</header>
+<main id="view"></main>
+<input type="file" id="jsonPicker" accept=".json,application/json" class="hidden">
+<input type="file" id="filePicker" class="hidden">
+
+<script>
+"use strict";
+/* ============================== State & storage ============================== */
+const STEPS=[["setup","Setup"],["plan","Academic year & study plan"],["feedback","Feedback entry"],["analysis","Comparative analysis"],["report","Report & export"]];
+const STATUSES=["Not started","In progress","Completed","Not applicable"];
+const CATS=["New","Repeated","Persistent"];
+const DEFAULT_SEMS=["Fall","Spring","Summer"];
+const MODES={
+  full:{label:"Full longitudinal",desc:"End-semester comments compared with this term's mid-semester AND previous years' end-semester comments."},
+  midend:{label:"Mid vs end semester",desc:"End-semester comments compared with the mid-semester comments of the same term."},
+  yoy:{label:"End vs previous year(s)",desc:"End-semester comments compared with end-semester comments of previous academic years."}
+};
+let D=blank();
+const UI={step:"setup",year:null,sem:null,course:null,aMode:"full",aCompare:null,aCourse:"__all",engine:"ai",busy:false};
+
+function blank(){return{schema:"course-feedback-tracker",version:1,institution:"",program:"",years:{},feedback:{},analyses:{},exec:{},created:new Date().toISOString(),updated:null}}
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const $=s=>document.querySelector(s);
+const yearNum=y=>{const m=String(y).match(/\d{4}/);return m?+m[0]:0};
+const sortedYears=()=>Object.keys(D.years).sort((a,b)=>yearNum(a)-yearNum(b)||a.localeCompare(b));
+function prevYear(y){const m=String(y).match(/^(\d{4})(\D+)(\d{2,4})$/);if(m){const b=+m[3]-1;return `${+m[1]-1}${m[2]}${String(b).padStart(m[3].length,"0")}`}const n=String(y).match(/^\d{4}$/);return n?String(+y-1):null}
+
+const IDB={db:null,
+  open(){return new Promise((res,rej)=>{if(!("indexedDB" in window))return rej("no idb");const r=indexedDB.open("course-feedback-tracker",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>rej(r.error)})},
+  get(k){return new Promise((res,rej)=>{try{const q=this.db.transaction("kv").objectStore("kv").get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)}catch(e){rej(e)}})},
+  set(k,v){return new Promise((res,rej)=>{try{const t=this.db.transaction("kv","readwrite");t.objectStore("kv").put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error)}catch(e){rej(e)}})}
+};
+let saveTimer=null;
+function save(){D.updated=new Date().toISOString();clearTimeout(saveTimer);
+  if(CLOUD){if(!canEdit()||!CL.ready)return;setStatus("Unsaved changes…");saveTimer=setTimeout(cloudPush,1200);return}
+  $("#saveState").textContent="Saving…";
+  saveTimer=setTimeout(async()=>{try{await IDB.set("workspace",JSON.parse(JSON.stringify(D)));$("#saveState").textContent="Saved to local database · "+new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}catch(e){$("#saveState").textContent="Not saved locally – export JSON to keep work"}},400)}
+
+function fb(y,s,c,create=true){
+  if(!D.feedback[y]){if(!create)return null;D.feedback[y]={}}
+  if(!D.feedback[y][s]){if(!create)return null;D.feedback[y][s]={}}
+  if(!D.feedback[y][s][c]){if(!create)return null;D.feedback[y][s][c]={mid:[],end:[]}}
+  return D.feedback[y][s][c];
+}
+const fbGet=(y,s,c)=>fb(y,s,c,false)||{mid:[],end:[]};
+const newItem=(o={})=>({id:uid(),area:o.area||"",action:o.action||"",taken:o.taken||"",status:STATUSES.includes(o.status)?o.status:(o.taken?"Completed":"Not started")});
+function coursesFor(y,s){const yr=D.years[y];if(!yr)return[];return yr.courses.filter(c=>!s||!c.semester||c.semester==="All"||c.semester===s)}
+function courseName(code){for(const y of sortedYears().reverse()){const c=(D.years[y].courses||[]).find(x=>x.code===code);if(c&&c.name)return c.name}return""}
+
+/* ============================== Gemini ============================== */
+const KEY_NAME="cft_gemini_key";
+function getKey(){try{return localStorage.getItem(KEY_NAME)||sessionStorage.getItem(KEY_NAME)||memKey||""}catch(e){return memKey||""}}
+let memKey="";
+function setKey(k,remember){if(k!==memKey){modelCands=null;badModels.clear()}memKey=k;try{localStorage.removeItem(KEY_NAME);sessionStorage.removeItem(KEY_NAME);if(k)(remember?localStorage:sessionStorage).setItem(KEY_NAME,k)}catch(e){}}
+function hasKey(){return CLOUD?canEdit():!!getKey()}
+
+/* Model is chosen automatically: the most capable Gemini model the key can use,
+   falling back to the next one whenever a model is unavailable, not permitted or out of quota. */
+const MODEL_FALLBACK=["gemini-3-pro-preview","gemini-2.5-pro","gemini-3-flash-preview","gemini-2.5-flash","gemini-2.0-flash","gemini-2.5-flash-lite"];
+let modelCands=null,lastModel="";const badModels=new Set();
+function scoreModel(id){
+  const m=id.match(/^gemini-(\d+(?:\.\d+)?)-(pro|flash-lite|flash)(.*)$/);if(!m)return -1;
+  if(/tts|image|audio|live|embed|thinking|computer|native|robotic|customtool|search|learnlm/.test(m[3]))return -1;
+  let s=parseFloat(m[1])*100+{pro:30,flash:20,"flash-lite":10}[m[2]];
+  if(/preview|exp/.test(m[3]))s-=1;if(/latest/.test(m[3]))s-=2;if(/\d{2}-\d{2}/.test(m[3]))s-=0.5;return s;
+}
+async function getCandidates(key){
+  if(modelCands)return modelCands;
+  let ids=[];
+  try{const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",{headers:{"x-goog-api-key":key}});
+    if(r.ok){const j=await r.json();ids=(j.models||[]).filter(m=>(m.supportedGenerationMethods||[]).includes("generateContent")).map(m=>m.name.replace(/^models\//,""))}
+    else if(r.status===400||r.status===401||r.status===403){const j=await r.json().catch(()=>({}));throw new Error(j?.error?.message||"The API key was rejected")}
+  }catch(e){if(/key|rejected|permission/i.test(e.message))throw e}
+  ids=[...new Set(ids.concat(MODEL_FALLBACK))].filter(x=>scoreModel(x)>=0).sort((a,b)=>scoreModel(b)-scoreModel(a));
+  return modelCands=ids;
+}
+async function gemini(parts,{json=true,temperature=0.2}={}){
+  if(CLOUD)return cloudGemini(parts,{json,temperature});
+  const key=getKey();if(!key)throw new Error("No Gemini API key. Add one in Setup.");
+  const body={contents:[{role:"user",parts}],generationConfig:{temperature}};
+  if(json)body.generationConfig.responseMimeType="application/json";
+  const cands=await getCandidates(key);let lastErr=null;
+  for(const model of cands){
+    if(badModels.has(model))continue;
+    for(let attempt=0;attempt<2;attempt++){
+      let r,j;
+      try{r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)});j=await r.json().catch(()=>({}))}
+      catch(e){lastErr=new Error("Network error contacting Gemini: "+e.message);await new Promise(z=>setTimeout(z,1500));continue}
+      if(r.ok){
+        lastModel=model;
+        const txt=(j.candidates?.[0]?.content?.parts||[]).filter(p=>!p.thought).map(p=>p.text||"").join("");
+        if(!txt)throw new Error("Gemini returned no text"+(j.candidates?.[0]?.finishReason?" ("+j.candidates[0].finishReason+")":""));
+        return json?parseJSONLoose(txt):txt;
+      }
+      const msg=j?.error?.message||("Gemini error "+r.status);lastErr=new Error(msg);
+      if(/API key/i.test(msg)&&r.status===400)throw lastErr;                       // bad key: no point trying other models
+      if(r.status===404||r.status===403||(r.status===400&&/model|not found|not supported|unsupported/i.test(msg))){badModels.add(model);break}
+      if(r.status===429){if(attempt===0&&!/limit: 0|quota/i.test(msg)){await new Promise(z=>setTimeout(z,2500));continue}badModels.add(model);break}
+      if(r.status>=500){await new Promise(z=>setTimeout(z,2000*(attempt+1)));continue}
+      throw lastErr;                                                                // other request errors (e.g. file too large)
+    }
+  }
+  throw lastErr||new Error("No Gemini model is available for this API key.");
+}
+function parseJSONLoose(t){t=t.trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();try{return JSON.parse(t)}catch(e){const a=t.indexOf("{"),b=t.lastIndexOf("}");if(a>=0&&b>a)return JSON.parse(t.slice(a,b+1));throw e}}
+
+/* ============================== Cloud: shared database + sign-in (Supabase) ============================== */
+/* Fill these two values after creating the Supabase project (see SETUP-GUIDE.md).
+   Leave them empty to run QualiTrack in single-user mode, saving only in this browser. */
+const QT_CONFIG={
+  supabaseUrl:"https://zehsmqoiqhqmkdssxgqf.supabase.co",
+  supabaseAnonKey:"",   // ← PASTE the "anon public" key here (Supabase → Settings → API Keys → Legacy → anon → Copy)
+  provider:"azure"      // Microsoft sign-in
+};
+const CLOUD=!!(QT_CONFIG.supabaseUrl&&QT_CONFIG.supabaseAnonKey);
+const CL={sb:null,session:null,profile:null,ready:false,synced:new Map(),pushing:false,again:false,channel:null,pendingRender:false};
+const role=()=>CLOUD?(CL.profile?.role||"none"):"admin";
+const canRead=()=>["viewer","editor","admin"].includes(role());
+const canEdit=()=>["editor","admin"].includes(role());
+const isAdmin=()=>role()==="admin";
+const ROLE_TXT={viewer:"You can view all feedback, analyses and reports.",editor:"You can enter feedback, upload reports and run analyses.",admin:"You can do everything, including approving users and setting roles."};
+function setStatus(t){$("#saveState").textContent=t}
+
+function unitMap(){const u=new Map();
+  u.set("meta|main",{institution:D.institution||"",program:D.program||""});
+  Object.entries(D.years).forEach(([y,v])=>u.set("year|"+y,v));
+  Object.entries(D.feedback).forEach(([y,ss])=>Object.entries(ss).forEach(([s,cs])=>Object.entries(cs).forEach(([c,r])=>{if(r.mid.length||r.end.length)u.set("feedback|"+JSON.stringify([y,s,c]),r)})));
+  Object.entries(D.analyses).forEach(([k,v])=>u.set("analysis|"+k,v));
+  Object.entries(D.exec).forEach(([k,v])=>u.set("exec|"+k,v));
+  return u}
+const splitUK=uk=>{const i=uk.indexOf("|");return[uk.slice(0,i),uk.slice(i+1)]};
+function applyDoc(kind,key,data){
+  if(kind==="meta"){D.institution=data?.institution||"";D.program=data?.program||"";return}
+  if(kind==="year"){if(data)D.years[key]=data;else delete D.years[key];return}
+  if(kind==="feedback"){const[y,s,c]=JSON.parse(key);if(data){fb(y,s,c);D.feedback[y][s][c]=data}else if(D.feedback[y]?.[s])delete D.feedback[y][s][c];return}
+  if(kind==="analysis"){if(data)D.analyses[key]=data;else delete D.analyses[key];return}
+  if(kind==="exec"){if(data)D.exec[key]=data;else delete D.exec[key]}
+}
+function markAllSynced(){CL.synced=new Map([...unitMap()].map(([k,v])=>[k,JSON.stringify(v)]))}
+async function cloudPull(){
+  const rows=[];
+  for(let from=0;;from+=1000){const{data,error}=await CL.sb.from("qt_docs").select("kind,key,data").order("kind").order("key").range(from,from+999);if(error)throw error;rows.push(...data);if(data.length<1000)break}
+  D=blank();rows.forEach(r=>applyDoc(r.kind,r.key,r.data));markAllSynced();
+}
+async function cloudPush(){
+  if(!CLOUD||!canEdit()||!CL.ready)return;
+  if(CL.pushing){CL.again=true;return}
+  CL.pushing=true;setStatus("Saving to shared database…");
+  try{
+    const cur=unitMap(),ups=[],dels=[];
+    cur.forEach((v,k)=>{const s=JSON.stringify(v);if(CL.synced.get(k)!==s){if(k.startsWith("meta|")&&!isAdmin())return;const[kind,key]=splitUK(k);ups.push({kind,key,data:v,_s:s,_k:k})}});
+    CL.synced.forEach((_,k)=>{if(!cur.has(k)&&!k.startsWith("meta|"))dels.push(k)});
+    for(let i=0;i<ups.length;i+=100){const chunk=ups.slice(i,i+100);
+      const{error}=await CL.sb.from("qt_docs").upsert(chunk.map(({kind,key,data})=>({kind,key,data})),{onConflict:"kind,key"});if(error)throw error;
+      chunk.forEach(u=>CL.synced.set(u._k,u._s))}
+    for(const k of dels){const[kind,key]=splitUK(k);const{error}=await CL.sb.from("qt_docs").delete().eq("kind",kind).eq("key",key);if(error)throw error;CL.synced.delete(k)}
+    setStatus("✓ Saved to shared database · "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));
+  }catch(e){console.error(e);setStatus("⚠️ Not saved: "+(e.message||"connection problem")+" – retrying");clearTimeout(saveTimer);saveTimer=setTimeout(cloudPush,8000)}
+  finally{CL.pushing=false;if(CL.again){CL.again=false;cloudPush()}}
+}
+function cloudSubscribe(){
+  if(CL.channel)CL.sb.removeChannel(CL.channel);
+  CL.channel=CL.sb.channel("qt-docs").on("postgres_changes",{event:"*",schema:"public",table:"qt_docs"},p=>{
+    const del=p.eventType==="DELETE",row=del?p.old:p.new;if(!row||!row.kind)return;
+    if(!del&&row.updated_by&&row.updated_by===CL.session?.user?.id)return;   // our own change coming back
+    const uk=row.kind+"|"+row.key;
+    if(!del&&CL.synced.get(uk)===JSON.stringify(row.data))return;
+    applyDoc(row.kind,row.key,del?null:row.data);
+    const v=unitMap().get(uk);if(v)CL.synced.set(uk,JSON.stringify(v));else CL.synced.delete(uk);
+    if(!del&&row.updated_email)setStatus("Updated by "+row.updated_email+" · "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}));
+    const a=document.activeElement;if(a&&a.closest&&a.closest("#view")&&/^(TEXTAREA|INPUT|SELECT)$/.test(a.tagName))CL.pendingRender=true;else render();
+  }).subscribe();
+}
+document.addEventListener("focusout",()=>{if(CL.pendingRender)setTimeout(()=>{const a=document.activeElement;if(CL.pendingRender&&!(a&&a.closest&&a.closest("#view")&&/^(TEXTAREA|INPUT)$/.test(a.tagName))){CL.pendingRender=false;render()}},150)});
+
+async function initCloud(){
+  if(!window.supabase?.createClient)await loadScript("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js");
+  CL.sb=window.supabase.createClient(QT_CONFIG.supabaseUrl,QT_CONFIG.supabaseAnonKey,{auth:{flowType:"pkce",persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  const{data:{session}}=await CL.sb.auth.getSession();
+  await onSession(session);
+  CL.sb.auth.onAuthStateChange((ev,s)=>{
+    if(ev==="SIGNED_OUT"){CL.session=null;CL.profile=null;CL.ready=false;D=blank();render();return}
+    if(s&&!CL.session)setTimeout(()=>onSession(s),0);else if(s)CL.session=s;
+  });
+}
+async function onSession(s){
+  CL.session=s;CL.ready=false;
+  if(!s){render();return}
+  setStatus("Loading…");
+  for(let i=0;i<3&&!CL.profile;i++){const{data}=await CL.sb.from("qt_profiles").select("*").eq("id",s.user.id).maybeSingle();CL.profile=data;if(!data)await new Promise(z=>setTimeout(z,1000))}
+  if(canRead()){try{await cloudPull();CL.ready=true;cloudSubscribe();setStatus("✓ Connected to shared database");if(sortedYears().length&&UI.step==="setup")UI.step="report"}catch(e){setStatus("⚠️ Could not load data: "+e.message)}}
+  else setStatus("");
+  render();
+}
+async function signIn(){await CL.sb.auth.signInWithOAuth({provider:QT_CONFIG.provider,options:{scopes:"email openid profile",redirectTo:location.origin+location.pathname}})}
+async function signOut(){if(CL.channel)CL.sb.removeChannel(CL.channel);await CL.sb.auth.signOut()}
+
+async function cloudGemini(parts,{json=true,temperature=0.2}={}){
+  if(!canEdit())throw new Error("AI features are available to editors and admins.");
+  const{data:{session}}=await CL.sb.auth.getSession();
+  const r=await fetch(QT_CONFIG.supabaseUrl+"/functions/v1/gemini",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+session.access_token,apikey:QT_CONFIG.supabaseAnonKey},body:JSON.stringify({parts,json,temperature})});
+  const j=await r.json().catch(()=>({error:"AI service error "+r.status+(r.status===413?" (file too large)":"")}));
+  if(!r.ok||j.error)throw new Error(j.error||j.message||j.msg||("AI service error "+r.status));
+  lastModel=j.model||"";return json?parseJSONLoose(j.text):j.text;
+}
+
+function renderGate(){
+  const card=inner=>`<div class="card" style="max-width:560px;margin:40px auto;text-align:center">${inner}</div>`;
+  if(!CL.sb){$("#view").innerHTML=card(`<h2>QualiTrack</h2><p class="sub"><span class="spinner"></span> Connecting…</p>`);return}
+  if(!CL.session){$("#view").innerHTML=card(`<h2 style="font-size:24px">QualiTrack</h2><p class="sub">Course feedback &amp; action tracker. Sign in with your university Microsoft account to see the feedback reports.</p>
+    <button class="btn primary" id="signInBtn" style="font-size:16px;padding:10px 20px">Sign in with Microsoft</button>`);$("#signInBtn").onclick=signIn;return}
+  $("#view").innerHTML=card(`<h2>Waiting for access</h2><p class="sub">You are signed in as <b>${esc(CL.session.user.email)}</b>, but this account has not been given access to QualiTrack yet. Ask a QualiTrack administrator to approve it, then reload this page.</p><button class="btn" id="soBtn">Sign out</button>`);
+  $("#soBtn").onclick=signOut;
+}
+function renderUserBox(){const b=$("#userBox");if(!b)return;
+  if(!CLOUD||!CL.session){b.innerHTML="";return}
+  b.innerHTML=`<span class="muted">${esc(CL.session.user.email)}</span> <span class="badge b-muted">${esc(role())}</span> <button class="btn sm" id="hdrSignOut">Sign out</button>`;
+  $("#hdrSignOut").onclick=signOut}
+function applyReadOnly(){const ro=CLOUD&&!canEdit();document.body.classList.toggle("ro",ro);if(!ro)return;
+  document.querySelectorAll("#view textarea,#view input[type=text],#view [data-f],#view [data-cf],#view [data-act],#view [data-sem],#view #addYear,#view #addSem,#view #upPlan,#view #pastePlan,#view #copyFrom,#view #addCourse,#view #multiUp,#view #runA,#view #rExec,#view #delYear,#view #rImport").forEach(el=>{
+    if(el.tagName==="TEXTAREA"||el.type==="text")el.readOnly=true;else el.disabled=true})}
+
+function renderSetupCloud(){
+  const p=CL.profile||{};
+  $("#view").innerHTML=`
+  <div class="card"><h2>Your account</h2><p class="sub" style="margin:0">Signed in as <b>${esc(CL.session.user.email)}</b> · role <span class="badge b-muted">${esc(p.role)}</span>. ${ROLE_TXT[p.role]||""}</p></div>
+  <div class="card"><h2>AI analysis</h2><p class="sub">Gemini runs on the college's server key, so nobody needs a personal API key. The most capable available model is chosen automatically, with automatic fallback.</p>
+    ${canEdit()?`<div class="row"><button class="btn" id="aiTest">Test AI connection</button><span class="small muted" id="aiStatus"></span></div>`:`<p class="small muted" style="margin:0">AI features are available to editors and admins.</p>`}</div>
+  <div class="card"><h2>Institution details</h2><p class="sub">Shown in reports${isAdmin()?"":" (set by an admin)"}.</p><div class="grid2">
+    <label class="f">College / institution<input type="text" id="inst" value="${esc(D.institution)}" ${isAdmin()?"":"readonly"}></label>
+    <label class="f">Program<input type="text" id="prog" value="${esc(D.program)}" ${isAdmin()?"":"readonly"}></label></div></div>
+  ${isAdmin()?`<div class="card"><h2>Users &amp; roles</h2>
+    <p class="sub">People who sign in with an allowed e-mail domain get <b>viewer</b> access automatically; anyone else waits as <b>pending</b> until you give them a role. <b>Editors</b> enter feedback and run analyses; <b>admins</b> also manage users.</p>
+    <div class="row" style="align-items:flex-end;margin-bottom:12px"><label class="f" style="flex:1;min-width:220px">Allowed e-mail domains (comma-separated)<input type="text" id="domains" placeholder="loading…"></label><button class="btn" id="saveDomains">Save domains</button></div>
+    <div class="tablewrap" id="usersTbl"><p class="muted small">Loading users…</p></div></div>`:""}
+  <div class="card"><div class="row"><button class="btn primary" data-go="plan">Continue → Academic year &amp; study plan</button></div></div>`;
+  const t=$("#aiTest");if(t)t.onclick=async e=>{busyBtn(e.target,true,"Testing");try{const r=await gemini([{text:'Reply with JSON {"ok":true}'}]);$("#aiStatus").textContent=r.ok?"✅ Working · model selected automatically: "+lastModel:"⚠️ Unexpected reply"}catch(err){$("#aiStatus").textContent="❌ "+err.message}busyBtn(e.target,false)};
+  if(isAdmin()){$("#inst").oninput=e=>{D.institution=e.target.value;save()};$("#prog").oninput=e=>{D.program=e.target.value;save()};loadUsers()}
+}
+async function loadUsers(){
+  const[{data:users,error},{data:st}]=await Promise.all([CL.sb.from("qt_profiles").select("*").order("created_at"),CL.sb.from("qt_settings").select("allowed_domains").eq("id",1).maybeSingle()]);
+  const box=$("#usersTbl");if(!box)return;
+  if(error){box.innerHTML=`<p class="small" style="color:var(--bad)">${esc(error.message)}</p>`;return}
+  const d=$("#domains");d.value=(st?.allowed_domains||[]).join(", ");d.placeholder="e.g. college.edu";
+  $("#saveDomains").onclick=async()=>{const list=d.value.split(/[,\s]+/).map(x=>x.trim().toLowerCase().replace(/^@/,"")).filter(Boolean);
+    const{error}=await CL.sb.from("qt_settings").update({allowed_domains:list}).eq("id",1);toast(error?"❌ "+error.message:"Allowed domains saved")};
+  box.innerHTML=`<table class="t"><thead><tr><th>Name</th><th>E-mail</th><th>Joined</th><th>Role</th></tr></thead><tbody>${users.map(u=>`<tr><td>${esc(u.full_name)}</td><td>${esc(u.email)}</td><td class="small muted">${new Date(u.created_at).toLocaleDateString()}</td>
+    <td><select data-uid="${esc(u.id)}">${["pending","viewer","editor","admin"].map(r=>`<option ${r===u.role?"selected":""}>${r}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table>`;
+  box.querySelectorAll("select[data-uid]").forEach(sel=>sel.onchange=async()=>{const uid=sel.dataset.uid;
+    if(uid===CL.session.user.id&&sel.value!=="admin"&&!confirm("Remove your own admin rights? You will not be able to manage users afterwards.")){sel.value="admin";return}
+    const{error}=await CL.sb.from("qt_profiles").update({role:sel.value}).eq("id",uid);toast(error?"❌ "+error.message:"Role updated");if(uid===CL.session.user.id&&!error){CL.profile.role=sel.value;render()}});
+}
+
+/* ============================== Files ============================== */
+const loaded={};
+function loadScript(src){return loaded[src]||(loaded[src]=new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=()=>rej(new Error("Could not load "+src));document.head.appendChild(s)}))}
+const readText=f=>f.text();
+const readBuf=f=>f.arrayBuffer();
+function b64(buf){let s="";const a=new Uint8Array(buf);for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s)}
+const ext=f=>(f.name.split(".").pop()||"").toLowerCase();
+async function sheetRows(f){await loadScript("https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js");const wb=XLSX.read(await readBuf(f),{type:"array"});let rows=[];wb.SheetNames.forEach(n=>{rows=rows.concat(XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:""}))});return rows}
+function csvRows(text){const rows=[];let row=[],cur="",q=false;for(let i=0;i<text.length;i++){const c=text[i];if(q){if(c=='"'){if(text[i+1]=='"'){cur+='"';i++}else q=false}else cur+=c}else if(c=='"')q=true;else if(c===","||c==="\t"){row.push(cur);cur=""}else if(c==="\n"||c==="\r"){if(c==="\r"&&text[i+1]==="\n")i++;row.push(cur);rows.push(row);row=[];cur=""}else cur+=c}if(cur||row.length){row.push(cur);rows.push(row)}return rows.filter(r=>r.some(x=>String(x).trim()))}
+/** Returns {parts:[...gemini parts], text:string|null, rows:array|null} */
+async function fileContent(f){
+  const e=ext(f);
+  if(e==="pdf")return{parts:[{inline_data:{mime_type:"application/pdf",data:b64(await readBuf(f))}}],text:null,rows:null};
+  if(["png","jpg","jpeg","webp","heic","gif"].includes(e))return{parts:[{inline_data:{mime_type:f.type||"image/"+(e==="jpg"?"jpeg":e),data:b64(await readBuf(f))}}],text:null,rows:null};
+  if(e==="docx"){await loadScript("https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js");const r=await mammoth.convertToHtml({arrayBuffer:await readBuf(f)});const tmp=document.createElement("div");tmp.innerHTML=r.value;
+    const tables=[...tmp.querySelectorAll("table")].map(t=>[...t.rows].map(tr=>[...tr.cells].map(td=>td.innerText.trim()).join(" | ")).join("\n")).join("\n\n");
+    tmp.querySelectorAll("table").forEach(t=>t.remove());const txt=tmp.innerText+"\n\n"+tables;return{parts:[{text:txt}],text:txt,rows:null}}
+  if(e==="doc"||e==="ppt")throw new Error(`${f.name}: old .${e} format can't be read in the browser – save it as .${e}x or PDF`);
+  if(e==="pptx"){await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js");const z=await JSZip.loadAsync(await readBuf(f));
+    const slides=Object.keys(z.files).filter(n=>/^ppt\/slides\/slide\d+\.xml$/.test(n)).sort((a,b)=>+a.match(/\d+/)[0]-+b.match(/\d+/)[0]);let txt="";
+    for(const n of slides){const x=await z.file(n).async("string");txt+=`\n--- Slide ${n.match(/\d+/)[0]} ---\n`+x.replace(/<\/a:p>/g,"\n").replace(/<a:tab\/>/g,"\t").replace(/<[^>]+>/g,"").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&quot;/g,'"')}
+    return{parts:[{text:txt}],text:txt,rows:null}}
+  if(e==="html"||e==="htm"){const tmp=document.createElement("div");tmp.innerHTML=(await readText(f)).replace(/<script[\s\S]*?<\/script>/gi,"");const txt=tmp.innerText;return{parts:[{text:txt}],text:txt,rows:null}}
+  if(["xlsx","xls","ods"].includes(e)){const rows=await sheetRows(f);const txt=rows.map(r=>r.join(" | ")).join("\n");return{parts:[{text:txt}],text:txt,rows}}
+  const txt=await readText(f);
+  if(e==="csv"||e==="tsv")return{parts:[{text:txt}],text:txt,rows:csvRows(txt)};
+  return{parts:[{text:txt}],text:txt,rows:null};
+}
+const ANY_FEEDBACK=".pdf,.docx,.doc,.xlsx,.xls,.ods,.csv,.tsv,.txt,.md,.rtf,.html,.htm,.pptx,.ppt,.png,.jpg,.jpeg,.webp,.heic";
+function pickFiles(accept){return new Promise(res=>{const p=$("#filePicker");p.value="";p.accept=accept||"";p.multiple=true;p.onchange=()=>{p.multiple=false;res([...p.files])};p.click()})}
+function pickFile(accept){$("#filePicker").multiple=false;return new Promise(res=>{const p=$("#filePicker");p.value="";p.accept=accept||"";p.onchange=()=>res(p.files[0]||null);p.click()})}
+function download(name,content,type){const b=new Blob([content],{type});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+
+/* ============================== UI helpers ============================== */
+function toast(msg,ms=3200){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),ms)}
+function modal(html,onMount){const bg=document.createElement("div");bg.className="modal-bg";bg.innerHTML=`<div class="modal" role="dialog" aria-modal="true">${html}</div>`;document.body.appendChild(bg);
+  const close=()=>bg.remove();bg.addEventListener("click",e=>{if(e.target===bg||e.target.closest("[data-close]"))close()});onMount&&onMount(bg.querySelector(".modal"),close);return close}
+function busyBtn(btn,on,label){if(!btn)return;if(on){btn.dataset.label=btn.innerHTML;btn.disabled=true;btn.innerHTML=`<span class="spinner"></span> ${label||"Working…"}`}else{btn.disabled=false;if(btn.dataset.label)btn.innerHTML=btn.dataset.label}}
+function autosize(el){el.style.height="auto";el.style.height=Math.min(el.scrollHeight+2,260)+"px"}
+function ensureSel(){const ys=sortedYears();if(!UI.year||!D.years[UI.year])UI.year=ys[ys.length-1]||null;
+  const sems=UI.year?D.years[UI.year].semesters:[];if(!UI.sem||!sems.includes(UI.sem))UI.sem=sems[0]||null;
+  const cs=UI.year?coursesFor(UI.year,UI.sem):[];if(!UI.course||!cs.find(c=>c.code===UI.course))UI.course=cs[0]?.code||null}
+
+/* ============================== Render ============================== */
+function go(step){UI.step=step;render();window.scrollTo({top:0})}
+function render(){
+  if(CLOUD&&!(CL.session&&canRead()&&CL.ready)){$("#steps").innerHTML="";$("#hdrCtx").textContent="Course feedback & action tracker";if(!CL.session)setStatus("");renderGate();renderUserBox();return}
+  ensureSel();
+  $("#steps").innerHTML=STEPS.map(([k,l],i)=>`<button class="${UI.step===k?"active":""}" data-step="${k}"><span class="num">${i}</span>${l}</button>`).join("");
+  $("#hdrCtx").textContent=[D.institution,D.program,UI.year&&("AY "+UI.year),UI.sem].filter(Boolean).join(" · ")||"Course feedback & action tracker";
+  ({setup:renderSetup,plan:renderPlan,feedback:renderFeedback,analysis:renderAnalysis,report:renderReport})[UI.step]();
+  document.querySelectorAll("#view textarea").forEach(autosize);
+  renderUserBox();applyReadOnly();
+}
+
+/* ---------- Step 0: Setup ---------- */
+function renderSetup(){
+  if(CLOUD)return renderSetupCloud();
+  const k=getKey();let remembered=false;try{remembered=!!localStorage.getItem(KEY_NAME)}catch(e){}
+  $("#view").innerHTML=`
+  <div class="card">
+    <h2>🔑 Get a Gemini API key</h2>
+    <p class="sub">The AI reads uploaded reports, extracts the feedback, and runs the semantic comparison. Without a key you can still type data and use quick keyword matching.</p>
+    <ol class="howto">
+      <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio → API keys</a> with a personal Google account (Workspace / university accounts are usually blocked).</li>
+      <li>Click <b>Create API key</b>, copy it and paste it below.</li>
+      <li>For real student feedback data, turn on billing for the key's project: on the paid tier Google does not use your data to improve its products.</li>
+    </ol>
+    <div class="row" style="align-items:flex-end">
+      <label class="f" style="flex:1;min-width:240px">Gemini API key
+        <input type="password" id="apiKey" value="${esc(k)}" placeholder="AIza…" autocomplete="off" spellcheck="false"></label>
+      <button class="btn" id="keyShow" type="button">Show</button>
+      <button class="btn primary" id="keySave">Save key</button>
+      <button class="btn" id="keyTest">Test</button>
+      <button class="btn danger" id="keyClear">Remove</button>
+    </div>
+    <label class="row small" style="margin-top:10px"><input type="checkbox" id="keyRemember" ${remembered?"checked":""}> Remember the key on this device (otherwise only until this tab closes)</label>
+    <p class="small muted" id="keyStatus" style="margin:8px 0 0">${k?"✅ A key is set."+(lastModel?" Using "+esc(lastModel)+".":""):"No key set."}</p>
+    <p class="small muted" style="margin:4px 0 0">The app picks the most capable Gemini model your key can use, and moves to the next one automatically if a model is unavailable or out of quota.</p>
+  </div>
+  <div class="card">
+    <h2>Institution details <span class="muted small">(optional)</span></h2>
+    <p class="sub">Shown in reports and in the exported file name.</p>
+    <div class="grid2">
+      <label class="f">College / institution<input type="text" id="inst" value="${esc(D.institution)}"></label>
+      <label class="f">Program<input type="text" id="prog" value="${esc(D.program)}"></label>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Where your work is kept</h2>
+    <p class="sub">Everything autosaves to a local database in this browser (IndexedDB). To move work to another computer, continue later, or add more academic years, use <b>Export JSON</b> and load it again in the next step.</p>
+    <div class="row"><button class="btn primary" data-go="plan">Continue → Academic year & study plan</button>
+    <button class="btn danger" id="resetAll">Start a new empty workspace</button></div>
+  </div>`;
+  $("#keyShow").onclick=()=>{const i=$("#apiKey");i.type=i.type==="password"?"text":"password";$("#keyShow").textContent=i.type==="password"?"Show":"Hide"};
+  $("#keySave").onclick=()=>{setKey($("#apiKey").value.trim(),$("#keyRemember").checked);$("#keyStatus").textContent=getKey()?"✅ Key saved"+($("#keyRemember").checked?" on this device.":" for this tab only."):"No key set.";};
+  $("#keyRemember").onchange=()=>{if(getKey())setKey(getKey(),$("#keyRemember").checked)};
+  $("#keyClear").onclick=()=>{setKey("",false);$("#apiKey").value="";$("#keyStatus").textContent="Key removed."};
+  $("#keyTest").onclick=async e=>{if($("#apiKey").value.trim()&&$("#apiKey").value.trim()!==getKey())setKey($("#apiKey").value.trim(),$("#keyRemember").checked);busyBtn(e.target,true,"Testing");
+    try{const r=await gemini([{text:'Reply with JSON {"ok":true}'}]);$("#keyStatus").textContent=r.ok?"✅ The key works. Model selected automatically: "+lastModel+".":"⚠️ Unexpected reply."}catch(err){$("#keyStatus").textContent="❌ "+err.message}busyBtn(e.target,false)};
+  $("#inst").oninput=e=>{D.institution=e.target.value;save()};$("#prog").oninput=e=>{D.program=e.target.value;save()};
+  $("#resetAll").onclick=()=>{if(confirm("Clear all academic years, feedback and analyses from this browser? Export JSON first if you want to keep them.")){D=blank();save();toast("Workspace cleared");render()}};
+}
+
+/* ---------- Step 1: Academic year & study plan ---------- */
+function renderPlan(){
+  const ys=sortedYears();const y=UI.year;const yr=y?D.years[y]:null;
+  $("#view").innerHTML=`
+  <div class="card edit-only">
+    <h2>Continue previous work</h2>
+    <p class="sub">Load a JSON file exported from QualiTrack to continue where you left off, or to add another academic year to it.</p>
+    <div class="drop" id="jsonDrop">Drop a <b>.json</b> work file here, or <button class="btn sm" id="planImport">choose file</button></div>
+  </div>
+  <div class="card">
+    <h2>Academic year</h2>
+    <p class="sub">Start with the academic year, then add the study plan courses for that year.</p>
+    <div class="row" style="align-items:flex-end">
+      <label class="f">New academic year<input type="text" id="newYear" placeholder="e.g. 2025-2026" value="${esc(ys.length?"":defaultYear())}"></label>
+      <button class="btn primary" id="addYear">Add year</button>
+      ${ys.length?`<span class="muted small" style="margin-left:8px">or select:</span><div class="chips">${ys.map(x=>`<button class="chip ${x===y?"on":""}" data-year="${esc(x)}">${esc(x)}</button>`).join("")}</div>`:""}
+    </div>
+  </div>
+  ${yr?`
+  <div class="card">
+    <div class="section-h"><div><h2>Study plan · ${esc(y)}</h2><p class="sub" style="margin:0">Semesters and courses that run this academic year.</p></div>
+      <button class="btn danger sm" id="delYear">Delete ${esc(y)}</button></div>
+    <h3 style="margin-top:10px">Semesters</h3>
+    <div class="row">
+      <div class="chips">${[...new Set(DEFAULT_SEMS.concat(yr.semesters))].map(s=>`<button class="chip ${yr.semesters.includes(s)?"on":""}" data-sem="${esc(s)}">${esc(s)}</button>`).join("")}</div>
+      <input type="text" id="newSem" placeholder="Other term name" style="width:160px"><button class="btn sm" id="addSem">Add</button>
+    </div>
+    <h3 style="margin-top:18px">Courses (${yr.courses.length})</h3>
+    <div class="row" style="margin-bottom:10px">
+      <button class="btn sm" id="upPlan">⬆ Upload study plan (PDF, Word, Excel, CSV, image)</button>
+      <button class="btn sm" id="pastePlan">Paste course list</button>
+      ${ys.filter(x=>x!==y&&D.years[x].courses.length).length?`<select id="copyFrom" class="small"><option value="">Copy courses from…</option>${ys.filter(x=>x!==y&&D.years[x].courses.length).map(x=>`<option>${esc(x)}</option>`).join("")}</select>`:""}
+      <button class="btn sm" id="addCourse">+ Add course</button>
+    </div>
+    <div class="tablewrap"><table class="t" id="courseTable">
+      <thead><tr><th style="width:150px">Code</th><th>Course name</th><th style="width:160px">Semester</th><th style="width:40px"></th></tr></thead>
+      <tbody>${yr.courses.map((c,i)=>`<tr data-ci="${i}">
+        <td><input type="text" data-cf="code" value="${esc(c.code)}"></td>
+        <td><input type="text" data-cf="name" value="${esc(c.name)}"></td>
+        <td><select data-cf="semester"><option value="All">All semesters</option>${yr.semesters.map(s=>`<option ${c.semester===s?"selected":""}>${esc(s)}</option>`).join("")}</select></td>
+        <td><button class="icon-btn" data-act="del-course" title="Remove">✕</button></td></tr>`).join("")||`<tr><td colspan="4" class="muted">No courses yet. Upload the study plan, paste a list, or add courses one by one.</td></tr>`}</tbody>
+    </table></div>
+    <div class="row" style="margin-top:14px"><button class="btn primary" data-go="feedback" ${yr.courses.length?"":"disabled"}>Continue → Feedback entry</button></div>
+  </div>`:""}`;
+
+  const dz=$("#jsonDrop");dz.ondragover=e=>{e.preventDefault();dz.classList.add("over")};dz.ondragleave=()=>dz.classList.remove("over");
+  dz.ondrop=e=>{e.preventDefault();dz.classList.remove("over");const f=e.dataTransfer.files[0];if(f)importJSONFile(f)};
+  $("#planImport").onclick=()=>$("#jsonPicker").click();
+  $("#addYear").onclick=()=>{const v=$("#newYear").value.trim();if(!v)return toast("Type an academic year, e.g. 2025-2026");
+    if(!D.years[v])D.years[v]={semesters:["Fall","Spring"],courses:[]};UI.year=v;save();render()};
+  $("#newYear").onkeydown=e=>{if(e.key==="Enter")$("#addYear").click()};
+  if(!yr)return;
+  $("#delYear").onclick=()=>{if(confirm(`Delete academic year ${y} with its study plan, feedback and analyses?`)){delete D.years[y];delete D.feedback[y];Object.keys(D.analyses).forEach(k=>{if(D.analyses[k].year===y)delete D.analyses[k]});UI.year=null;save();render()}};
+  $("#addSem").onclick=()=>{const v=$("#newSem").value.trim();if(v&&!yr.semesters.includes(v)){yr.semesters.push(v);save();render()}};
+  $("#addCourse").onclick=()=>{yr.courses.push({code:"",name:"",semester:"All"});save();render();const ins=document.querySelectorAll('#courseTable input[data-cf="code"]');ins[ins.length-1]?.focus()};
+  $("#pastePlan").onclick=pastePlanModal;
+  $("#upPlan").onclick=uploadStudyPlan;
+  const cf=$("#copyFrom");if(cf)cf.onchange=()=>{const src=D.years[cf.value];if(!src)return;mergeCourses(y,src.courses.map(c=>({...c})));toast("Courses copied from "+cf.value);render()};
+}
+function defaultYear(){const d=new Date(),yy=d.getFullYear();return d.getMonth()>=7?`${yy}-${yy+1}`:`${yy-1}-${yy}`}
+function mergeCourses(y,list){const yr=D.years[y];let added=0;list.forEach(c=>{c.code=String(c.code||"").trim();c.name=String(c.name||"").trim();if(!c.code&&!c.name)return;
+  if(!c.code)c.code=c.name;const ex=yr.courses.find(x=>x.code.toLowerCase()===c.code.toLowerCase());
+  if(ex){if(!ex.name&&c.name)ex.name=c.name}else{yr.courses.push({code:c.code,name:c.name,semester:yr.semesters.includes(c.semester)?c.semester:"All"});added++}});save();return added}
+function parseCourseLines(text){return text.split(/\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+  const parts=l.split(/\t|\s*\|\s*|\s*;\s*|\s*,\s*|\s+[-–—:]\s+/).map(s=>s.trim()).filter(Boolean);
+  if(parts.length>=2)return{code:parts[0],name:parts.slice(1,parts[2]&&DEFAULT_SEMS.includes(parts[parts.length-1])?-1:undefined).join(" "),semester:DEFAULT_SEMS.includes(parts[parts.length-1])?parts[parts.length-1]:"All"};
+  const m=l.match(/^([A-Za-z]{2,6}\s?-?\d{2,4}[A-Za-z]?)\s+(.+)$/);return m?{code:m[1],name:m[2],semester:"All"}:{code:l,name:"",semester:"All"}})}
+function pastePlanModal(){modal(`<h3>Paste course list</h3><p class="sub">One course per line, e.g. <code>MED 101 – Anatomy I</code> or <code>MED101, Anatomy I, Fall</code>.</p>
+  <textarea id="pp" rows="10"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="ppOk">Add courses</button></div>`,(m,close)=>{
+  m.querySelector("#ppOk").onclick=()=>{const n=mergeCourses(UI.year,parseCourseLines(m.querySelector("#pp").value));close();toast(n+" course(s) added");render()}})}
+async function uploadStudyPlan(){
+  const f=await pickFile(".pdf,.docx,.xlsx,.xls,.csv,.txt,.png,.jpg,.jpeg,.webp");if(!f)return;const btn=$("#upPlan");busyBtn(btn,true,"Reading study plan");
+  try{const fc=await fileContent(f);let list=null;
+    if(hasKey()){const yr=D.years[UI.year];
+      const r=await gemini([{text:`You read a college program study plan and list its courses. Academic year: ${UI.year}. Known semester names: ${yr.semesters.join(", ")}.
+Return JSON {"courses":[{"code":"course code exactly as written","name":"course title","semester":"one of the known semester names if the plan places the course in a specific semester, otherwise \\"All\\""}]}. Include every course once. Do not invent courses.`},...fc.parts]);
+      list=r.courses||[];
+    }else if(fc.rows){const rows=fc.rows;const h=rows[0].map(x=>String(x).toLowerCase());const ci=h.findIndex(x=>/code/.test(x)),ni=h.findIndex(x=>/name|title/.test(x)),si=h.findIndex(x=>/sem|term/.test(x));
+      list=(ci>=0||ni>=0?rows.slice(1):rows).map(r=>({code:r[ci>=0?ci:0],name:r[ni>=0?ni:1]||"",semester:si>=0?String(r[si]):"All"}));
+    }else if(fc.text){list=parseCourseLines(fc.text)}
+    else throw new Error("Add a Gemini API key in Setup to read PDF and image files.");
+    const n=mergeCourses(UI.year,list);toast(`${n} course(s) added from ${f.name}`);render();
+  }catch(e){toast("❌ "+e.message,6000);busyBtn(btn,false)}
+}
+
+/* ---------- Step 2: Feedback entry ---------- */
+function renderFeedback(){
+  const ys=sortedYears();
+  if(!ys.length){$("#view").innerHTML=`<div class="card"><h2>No academic year yet</h2><p class="sub">Add the academic year and study plan first.</p><button class="btn primary" data-go="plan">Go to study plan</button></div>`;return}
+  const y=UI.year,s=UI.sem,cs=coursesFor(y,s);const c=cs.find(x=>x.code===UI.course);
+  const rec=c?fbGet(y,s,c.code):null;
+  $("#view").innerHTML=`
+  <div class="card">
+    <div class="row" style="align-items:flex-end">
+      <label class="f">Academic year<select id="fbYear">${ys.map(x=>`<option ${x===y?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
+      <label class="f">Semester<select id="fbSem">${D.years[y].semesters.map(x=>`<option ${x===s?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
+      <div style="flex:1"></div>
+      <button class="btn primary" id="multiUp">⬆ Upload feedback files (AI)</button>
+    </div>
+    <p class="small muted" style="margin:8px 0 0">Upload any number of mid- and end-semester reports at once (PDF, Word, Excel, CSV, PowerPoint, text or images). The AI reads each file, works out the course and the round, and fills the cells; you review everything before it is added. ${hasKey()?"":"<b>Add a Gemini key in Setup</b> to read PDF, Word, PowerPoint and image files; without it only CSV/Excel tables and text are parsed."}</p>
+  </div>
+  <div class="layout-fb">
+    <div class="card" style="padding:12px">
+      <input type="search" id="cSearch" placeholder="Filter courses" style="width:100%;margin-bottom:8px">
+      <div class="clist" id="clist">${cs.map(x=>{const r=fbGet(y,s,x.code);return`<button class="citem ${x.code===UI.course?"on":""}" data-course="${esc(x.code)}" data-q="${esc((x.code+" "+x.name).toLowerCase())}"><span class="code">${esc(x.code)}</span><span class="nm">${esc(x.name)}</span><span class="dots"><span class="dot ${r.mid.length?"has":""}">Mid ${r.mid.length}</span><span class="dot ${r.end.length?"has":""}">End ${r.end.length}</span></span></button>`}).join("")||`<p class="muted small">No courses for ${esc(s)}. <a href="#" data-go="plan">Edit study plan</a></p>`}</div>
+    </div>
+    <div>${c?`
+      <div class="card"><h2>${esc(c.code)} · ${esc(c.name)}</h2><p class="sub" style="margin:0">${esc(s)} ${esc(y)} — type directly in the cells; changes save automatically.</p></div>
+      ${["mid","end"].map(k=>itemSection(k,rec[k])).join("")}
+      <div class="row"><button class="btn primary" data-go="analysis">Continue → Comparative analysis</button></div>`
+    :`<div class="card"><p class="muted">Select a course.</p></div>`}</div>
+  </div>`;
+  $("#fbYear").onchange=e=>{UI.year=e.target.value;UI.sem=null;UI.course=null;render()};
+  $("#fbSem").onchange=e=>{UI.sem=e.target.value;UI.course=null;render()};
+  $("#cSearch").oninput=e=>{const q=e.target.value.toLowerCase();document.querySelectorAll(".citem").forEach(b=>b.classList.toggle("hidden",!b.dataset.q.includes(q)))};
+  $("#multiUp").onclick=()=>multiUploadModal({});
+}
+const KLABEL={mid:"Mid-semester feedback",end:"End-semester feedback"};
+function itemSection(k,items){
+  return`<div class="card" data-kind="${k}">
+    <div class="section-h"><h3 style="margin:0">${KLABEL[k]} <span class="badge b-muted">${items.length}</span></h3>
+      <div class="row"><button class="btn sm" data-act="add-item">+ Add row</button><button class="btn sm" data-act="upload-items">⬆ Upload files</button><button class="btn sm" data-act="paste-items">Paste text</button>
+      ${items.length?`<button class="btn sm danger" data-act="clear-items">Clear</button>`:""}</div></div>
+    <div class="tablewrap"><table class="t"><thead><tr><th style="width:4%">#</th><th style="width:30%">Area of improvement</th><th style="width:27%">Action to be taken</th><th style="width:25%">Action taken</th><th style="width:12%">Status</th><th></th></tr></thead>
+    <tbody>${items.map((it,i)=>`<tr data-item="${it.id}"><td class="muted">${i+1}</td>
+      <td><textarea data-f="area" rows="1">${esc(it.area)}</textarea></td>
+      <td><textarea data-f="action" rows="1">${esc(it.action)}</textarea></td>
+      <td><textarea data-f="taken" rows="1">${esc(it.taken)}</textarea></td>
+      <td><select data-f="status">${STATUSES.map(x=>`<option ${x===it.status?"selected":""}>${x}</option>`).join("")}</select></td>
+      <td><button class="icon-btn" data-act="del-item" title="Delete row">✕</button></td></tr>`).join("")||`<tr><td colspan="6" class="muted small">No ${k==="mid"?"mid":"end"}-semester comments yet. Add rows, upload the course's report, or paste text.</td></tr>`}</tbody></table></div>
+  </div>`;
+}
+function curRec(){return fb(UI.year,UI.sem,UI.course)}
+function findItem(id){const r=curRec();for(const k of["mid","end"]){const it=r[k].find(x=>x.id===id);if(it)return{it,list:r[k]}}return{}}
+
+const roundFromName=n=>/mid/i.test(n||"")?"mid":/(end|final)/i.test(n||"")?"end":"";
+const normTxt=s=>String(s||"").toLowerCase().replace(/[^\p{L}\p{N}]/gu,"");
+function resolveCourse(code,name){const cs=coursesFor(UI.year,UI.sem);const n=normTxt(code),nm=normTxt(name);
+  const hit=cs.find(c=>n&&normTxt(c.code)===n)||cs.find(c=>nm&&normTxt(c.name)===nm)||cs.find(c=>n&&n.length>2&&(normTxt(c.code).includes(n)||n.includes(normTxt(c.code))))||cs.find(c=>n&&normTxt(c.name)===n);
+  return hit?hit.code:String(code||"").trim()}
+async function extractItems(fc,{round="auto",course="",fileName=""}={}){
+  const cs=coursesFor(UI.year,UI.sem);const hint=roundFromName(fileName);
+  if(hasKey()){
+    const r=await gemini([{text:`You extract structured student-feedback items from a college course feedback document${fileName?` (file name: "${fileName}")`:""}. Academic year ${UI.year}, ${UI.sem} semester.
+${course?`The document is about course ${course} (${courseName(course)}); set course_code to "${course}".`:`The document may cover one or several courses. Known courses in the study plan (code — name):
+${cs.map(c=>c.code+" — "+c.name).join("\n")||"(none)"}
+Set course_code to the matching known code (match by code, name or abbreviation). If the course is not in the list, give its code as written and its title in course_name. Use "" only if no course can be identified.`}
+${round==="auto"?`For each item decide whether it is MID-semester feedback ("mid") or END-semester feedback ("end") using headings, titles, dates, column names and the file name. If the whole document is clearly one type, use that type for every item.`:`All items are ${round==="mid"?"MID":"END"}-semester feedback; set round to "${round}".`}
+Return JSON {"items":[{"course_code":"","course_name":"","round":"mid|end","area_of_improvement":"","action_to_be_taken":"","action_taken":"","status":"Not started|In progress|Completed"}]}.
+Rules: one item per distinct area of improvement / student comment theme; keep the original wording, lightly cleaned (if the document is not in English, translate faithfully to English); put planned actions and actions taken in their own fields whenever the document gives them, even if they are in separate columns, sections or tables (attach each to the right area), otherwise ""; status = "Completed" only if the document says the action was done, "In progress" if partly done; skip strengths/positive comments unless written as improvement areas; never invent content.`},...fc.parts]);
+    return(r.items||[]).map(x=>({file:fileName,course:course||resolveCourse(x.course_code,x.course_name),courseName:x.course_name||"",
+      round:round!=="auto"?round:(x.round==="mid"||x.round==="end"?x.round:hint||"end"),
+      area:x.area_of_improvement||"",action:x.action_to_be_taken||"",taken:x.action_taken||"",status:x.status})).filter(x=>x.area||x.action||x.taken);
+  }
+  const rd=round!=="auto"?round:hint||"mid";
+  if(fc.rows&&fc.rows.length){const rows=fc.rows,h=rows[0].map(x=>String(x).toLowerCase());
+    const f=(re,no)=>h.findIndex(x=>re.test(x)&&!(no&&no.test(x)));let ia=f(/area|improv|comment|issue|concern|feedback/),ip=f(/to be|planned|proposed|recommend|^action/,/^action taken|actions taken/),it=f(/taken|implement|done|complet/,/to be|planned|proposed/),ic=f(/course|code/),ir=f(/round|type|period|stage/);
+    const hasHeader=ia>=0||ip>=0||it>=0;if(!hasHeader){ia=0;ip=1;it=2}
+    return(hasHeader?rows.slice(1):rows).map(r=>({file:fileName,course:course||(ic>=0?resolveCourse(String(r[ic]),""):""),round:ir>=0?(roundFromName(String(r[ir]))||rd):rd,
+      area:String(r[ia]??"").trim(),action:ip>=0?String(r[ip]??"").trim():"",taken:it>=0?String(r[it]??"").trim():""})).filter(x=>x.area);
+  }
+  if(fc.text)return fc.text.split(/\n+/).map(l=>l.replace(/^\s*[-•*\d.)]+\s*/,"").trim()).filter(l=>l.length>3).map(area=>({file:fileName,course,round:rd,area,action:"",taken:""}));
+  throw new Error("Add a Gemini API key in Setup to read PDF, Word, PowerPoint and image files.");
+}
+function multiUploadModal({course="",round=""}){
+  const files=[];const fixed=!!round;
+  modal(`<h3>Upload feedback files${course?" · "+esc(course):""}</h3>
+  <p class="sub">Target: <b>${esc(UI.sem)} ${esc(UI.year)}</b>${course?` · course <b>${esc(course)}</b> · ${esc(KLABEL[round]||"")}`:" · courses and rounds are detected from each file"}. Accepted: PDF, Word (.docx), Excel/CSV, PowerPoint (.pptx), text, HTML and images (scans/photos).</p>
+  ${fixed?"":`<div class="row" style="margin-bottom:10px"><label class="f">Feedback round<select id="muRound"><option value="auto">Detect automatically from each file</option><option value="mid">All mid-semester</option><option value="end">All end-semester</option></select></label></div>`}
+  <div class="drop" id="muDrop">Drop files here, or <button class="btn sm" id="muPick">choose files</button><div class="small" style="margin-top:6px">You can add several files at once and add more before starting.</div></div>
+  <div id="muList" style="margin-top:10px"></div>
+  <div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="muGo" disabled>Read files with AI</button></div>`,(m,close)=>{
+    const list=m.querySelector("#muList"),goBtn=m.querySelector("#muGo");
+    const draw=()=>{list.innerHTML=files.length?`<table class="t"><tbody>${files.map((f,i)=>`<tr><td>${esc(f.file.name)} <span class="muted small">${(f.file.size/1024).toFixed(0)} KB</span></td><td class="small" style="width:45%">${f.state||'<span class="muted">waiting</span>'}</td><td style="width:30px">${f.state?"":`<button class="icon-btn" data-rm="${i}">✕</button>`}</td></tr>`).join("")}</tbody></table>`:"";goBtn.disabled=!files.length||m._busy};
+    const add=fl=>{[...fl].forEach(f=>{if(!files.some(x=>x.file.name===f.name&&x.file.size===f.size))files.push({file:f})});draw()};
+    list.onclick=e=>{const b=e.target.closest("[data-rm]");if(b){files.splice(+b.dataset.rm,1);draw()}};
+    const dz=m.querySelector("#muDrop");dz.ondragover=e=>{e.preventDefault();dz.classList.add("over")};dz.ondragleave=()=>dz.classList.remove("over");
+    dz.ondrop=e=>{e.preventDefault();dz.classList.remove("over");add(e.dataTransfer.files)};
+    m.querySelector("#muPick").onclick=async()=>add(await pickFiles(ANY_FEEDBACK));
+    goBtn.onclick=async()=>{const rd=fixed?round:m.querySelector("#muRound").value;m._busy=true;busyBtn(goBtn,true,"Reading files");const all=[];
+      for(const f of files){f.state='<span class="spinner"></span> reading…';draw();
+        try{const items=await extractItems(await fileContent(f.file),{round:rd,course,fileName:f.file.name});all.push(...items);f.state=`<span style="color:var(--ok)">✓ ${items.length} item(s)</span>`}
+        catch(e){f.state=`<span style="color:var(--bad)">✗ ${esc(e.message)}</span>`}
+        draw();busyBtn(goBtn,true,"Reading files")}
+      m._busy=false;busyBtn(goBtn,false);
+      if(!all.length){goBtn.disabled=true;return toast("No feedback items were found in these files",5000)}
+      const failed=files.filter(f=>/✗/.test(f.state)).length;close();if(failed)toast(`${failed} file(s) could not be read – the rest are ready to review`,6000);
+      reviewExtracted(all,{course,src:files.length+" file(s)"})};
+  });
+}
+function pasteItems(kind){modal(`<h3>Paste ${KLABEL[kind].toLowerCase()} · ${esc(UI.course)}</h3><p class="sub">Paste the comments or table text. ${hasKey()?"Gemini will structure it.":"Each line becomes one area of improvement."}</p>
+  <textarea id="pt" rows="12"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" data-close>Cancel</button><button class="btn primary" id="ptOk">Extract</button></div>`,(m,close)=>{
+  m.querySelector("#ptOk").onclick=async e=>{const t=m.querySelector("#pt").value;if(!t.trim())return;busyBtn(e.target,true,"Extracting");
+    try{const tab=t.includes("\t")?csvRows(t):null;const items=await extractItems({parts:[{text:t}],text:t,rows:!hasKey()&&tab&&tab[0].length>1?tab:null},{round:kind,course:UI.course,fileName:"pasted text"});close();reviewExtracted(items,{course:UI.course,src:"pasted text"})}catch(err){toast("❌ "+err.message,6000);busyBtn(e.target,false)}}})}
+const STATUS_RANK={"Not started":0,"Not applicable":0,"In progress":1,"Completed":2};
+function reviewExtracted(items,{course="",src=""}={}){
+  if(!items.length)return toast("No feedback items found in "+src);
+  const cs=coursesFor(UI.year,UI.sem);const known=new Set(cs.map(c=>c.code));
+  const unknown=[...new Map(items.filter(it=>it.course&&!known.has(it.course)).map(it=>[it.course,it.courseName])).entries()];
+  const multiFile=new Set(items.map(i=>i.file)).size>1;
+  const courseOpts=sel=>`<option value="">— choose —</option>${cs.map(c=>`<option value="${esc(c.code)}" ${c.code===sel?"selected":""}>${esc(c.code)}</option>`).join("")}${unknown.map(([c,n])=>`<option value="new:${esc(c)}" ${c===sel?"selected":""}>+ ${esc(c)} (new${n?": "+esc(n):""})</option>`).join("")}`;
+  modal(`<h3>Review extracted feedback (${items.length} rows)</h3><p class="sub">From ${esc(src)} · ${esc(UI.sem)} ${esc(UI.year)}. Check the course and round of each row and edit any cell; untick rows to skip.${unknown.length?` Courses marked “new” are not in the study plan and will be added to it.`:""}</p>
+  <div class="tablewrap" style="max-height:58vh;overflow:auto"><table class="t"><thead><tr><th><input type="checkbox" id="rxAll" checked aria-label="Select all"></th>${multiFile?"<th>File</th>":""}${course?"":"<th>Course</th>"}<th>Round</th><th>Area of improvement</th><th>Action to be taken</th><th>Action taken</th><th>Status</th></tr></thead><tbody>
+  ${items.map((it,i)=>`<tr data-i="${i}"><td><input type="checkbox" checked data-x="on"></td>${multiFile?`<td class="small muted">${esc(it.file)}</td>`:""}
+   ${course?"":`<td><select data-x="course">${courseOpts(it.course)}</select></td>`}
+   <td><select data-x="round"><option value="mid" ${it.round==="mid"?"selected":""}>Mid</option><option value="end" ${it.round==="end"?"selected":""}>End</option></select></td>
+   <td><textarea data-x="area">${esc(it.area)}</textarea></td><td><textarea data-x="action">${esc(it.action)}</textarea></td><td><textarea data-x="taken">${esc(it.taken)}</textarea></td>
+   <td><select data-x="status">${STATUSES.map(x=>`<option ${x===(it.status||(it.taken?"Completed":"Not started"))?"selected":""}>${x}</option>`).join("")}</select></td></tr>`).join("")}
+  </tbody></table></div>
+  <div class="row" style="margin-top:12px"><label class="f">When a course already has rows<select id="rxMode">
+    <option value="fill">Fill empty cells of matching rows, add the rest (recommended)</option><option value="add">Add everything as new rows</option><option value="replace">Replace the existing rows of the affected course/round</option></select></label>
+    <div style="flex:1"></div><button class="btn" data-close>Cancel</button><button class="btn primary" id="rxOk">Fill in the cells</button></div>`,(m,close)=>{
+    m.querySelectorAll("textarea").forEach(autosize);
+    m.querySelector("#rxAll").onchange=e=>m.querySelectorAll('[data-x="on"]').forEach(c=>c.checked=e.target.checked);
+    m.querySelector("#rxOk").onclick=()=>{const mode=m.querySelector("#rxMode").value;const touched=new Set(),courses=new Set();let added=0,filled=0,skipped=0;
+      m.querySelectorAll("tbody tr").forEach(tr=>{const g=x=>tr.querySelector(`[data-x="${x}"]`);if(!g("on").checked)return;
+        let code=course||g("course").value;if(!code){skipped++;return}
+        if(code.startsWith("new:")){code=code.slice(4);mergeCourses(UI.year,[{code,name:items[+tr.dataset.i].courseName,semester:UI.sem}])}
+        const round=g("round").value,rec=fb(UI.year,UI.sem,code),tk=code+"|"+round;
+        if(mode==="replace"&&!touched.has(tk))rec[round]=[];touched.add(tk);courses.add(code);
+        const v={area:g("area").value.trim(),action:g("action").value.trim(),taken:g("taken").value.trim(),status:g("status").value};
+        const ex=mode==="fill"&&v.area?rec[round].find(x=>normTxt(x.area)===normTxt(v.area)||localSim(x.area,v.area)>=70):null;
+        if(ex){["action","taken"].forEach(f=>{if(v[f]&&!ex[f])ex[f]=v[f];else if(v[f]&&!normTxt(ex[f]).includes(normTxt(v[f])))ex[f]+="\n"+v[f]});
+          if((STATUS_RANK[v.status]||0)>(STATUS_RANK[ex.status]||0))ex.status=v.status;filled++}
+        else{rec[round].push(newItem(v));added++}});
+      save();close();if(!course&&courses.size&&!courses.has(UI.course))UI.course=[...courses][0];
+      toast(`${added} row(s) added, ${filled} existing row(s) filled in, across ${courses.size} course(s)`+(skipped?` · ${skipped} skipped (no course chosen)`:""),5000);render()}})
+}
+
+/* ---------- Step 3: Analysis ---------- */
+const STOP=new Set("a an the and or of to in on for with is are was were be been by at as it its this that these those from more less very not no too students student course courses instructor instructors should need needs lack lot some have has had their there they them which will would can could also than then into about being".split(" "));
+const stem=w=>w.length>4?w.replace(/(ing|ed|es|s|ly|ment|tion)$/,""):w;
+const toks=s=>new Set(String(s).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu," ").split(/\s+/).filter(w=>w.length>2&&!STOP.has(w)).map(stem));
+function localSim(a,b){const A=toks(a),B=toks(b);if(!A.size||!B.size)return 0;let n=0;A.forEach(x=>{if(B.has(x))n++});return Math.round(100*n/Math.sqrt(A.size*B.size))}
+
+function refSets(mode,y,s,code,compareYears){
+  const refs=[];
+  if(mode==="midend"||mode==="full")fbGet(y,s,code).mid.forEach(it=>refs.push({...it,term:`${y}|mid`,label:`Mid ${s} ${y}`}));
+  if(mode==="yoy"||mode==="full")compareYears.forEach(cy=>fbGet(cy,s,code).end.forEach(it=>refs.push({...it,term:`${cy}|end`,label:`End ${s} ${cy}`})));
+  return refs;
+}
+async function analyseCourse(mode,y,s,code,compareYears,useAI){
+  const cur=fbGet(y,s,code).end,refs=refSets(mode,y,s,code,compareYears);
+  const res={key:`${mode}|${y}|${s}|${code}`,mode,year:y,sem:s,code,compareYears:mode==="midend"?[]:compareYears.slice(),created:new Date().toISOString(),method:"Local keyword matching",
+    results:[],resolved:[],summary:"",recommendations:[],themes:[],refCount:refs.length};
+  if(!cur.length){res.summary="No end-semester comments entered for this course.";return res}
+  let ai=null;
+  if(useAI&&refs.length||useAI&&cur.length){
+    const C=cur.map((it,i)=>({id:"C"+(i+1),area:it.area,planned_action:it.action}));
+    const R=refs.map((it,i)=>({id:"R"+(i+1),round:it.label,area:it.area,planned_action:it.action,action_taken:it.taken,status:it.status}));
+    ai=await gemini([{text:`You are an academic quality-assurance analyst performing a thorough semantic AI analysis of student course feedback for ${code} (${courseName(code)}).
+CURRENT = end-semester comments, ${s} ${y}. REFERENCE = earlier feedback rounds (${[...new Set(refs.map(r=>r.label))].join("; ")||"none"}).
+Task:
+1. For every CURRENT item, find every REFERENCE item that expresses the SAME underlying concern (judge meaning, not wording; e.g. "slides overloaded" ≈ "too much content per lecture"). Give similarity 0-100; include only matches ≥ 60.
+2. Give each CURRENT item a short theme label (2-4 words, reuse labels across items when the concern is the same, e.g. "Assessment feedback", "Lecture pace", "Learning resources"), a severity (high|medium|low), and judge whether the earlier actions taken on matched items worked: "effective" (concern weaker now), "partially effective", "ineffective" (concern unchanged or worse), "no action recorded", or "not applicable" (no match).
+3. For each REFERENCE item with no CURRENT match, explain briefly whether it looks resolved by the action taken.
+4. Write a 3-5 sentence summary for the course coordinator and 2-5 concrete recommendations.
+Return JSON exactly:
+{"current":[{"id":"C1","matches":[{"ref_id":"R1","similarity":85}],"theme":"","severity":"medium","action_effectiveness":"","rationale":"one or two sentences"}],
+"unmatched_reference":[{"ref_id":"R2","rationale":""}],"summary":"","recommendations":[""]}
+CURRENT:\n${JSON.stringify(C)}\nREFERENCE:\n${JSON.stringify(R)}`}],{temperature:0.1});
+    res.method="Gemini · "+lastModel;
+  }
+  const matchedRefs=new Set();
+  cur.forEach((it,i)=>{
+    let matches=[],a=null;
+    if(ai){a=(ai.current||[]).find(x=>x.id==="C"+(i+1))||{};
+      matches=(a.matches||[]).map(m=>({idx:+String(m.ref_id).replace(/\D/g,"")-1,sim:+m.similarity||0})).filter(m=>refs[m.idx]&&m.sim>=60);
+    }else{matches=refs.map((r,idx)=>({idx,sim:localSim(it.area+" "+it.action,r.area+" "+r.action)})).filter(m=>m.sim>=35)}
+    matches.sort((p,q)=>q.sim-p.sim);matches.forEach(m=>matchedRefs.add(m.idx));
+    const terms=new Set(matches.map(m=>refs[m.idx].term));
+    const cat=terms.size===0?"New":terms.size===1?"Repeated":"Persistent";
+    let eff=a?.action_effectiveness;if(!ai)eff=!matches.length?"not applicable":matches.some(m=>refs[m.idx].taken)?"ineffective":"no action recorded";
+    res.results.push({itemId:it.id,area:it.area,action:it.action,taken:it.taken,status:it.status,category:cat,autoCategory:cat,
+      matches:matches.map(m=>({label:refs[m.idx].label,term:refs[m.idx].term,area:refs[m.idx].area,taken:refs[m.idx].taken,sim:m.sim})),
+      theme:a?.theme||"",severity:a?.severity||"",effectiveness:eff||"",rationale:a?.rationale||(matches.length?`Shares key terms with ${matches.length} earlier comment(s).`:"No similar earlier comment found.")});
+  });
+  refs.forEach((r,idx)=>{if(!matchedRefs.has(idx)){const u=ai?(ai.unmatched_reference||[]).find(x=>+String(x.ref_id).replace(/\D/g,"")-1===idx):null;
+    res.resolved.push({label:r.label,area:r.area,taken:r.taken,status:r.status,rationale:u?.rationale||(r.taken?"Not raised again after the action taken.":"Not raised again.")})}});
+  if(ai){res.summary=ai.summary||"";res.recommendations=ai.recommendations||[]}
+  else{const c=countCats([res]);res.summary=`${cur.length} end-semester comment(s): ${c.New} new, ${c.Repeated} repeated, ${c.Persistent} persistent; ${res.resolved.length} earlier comment(s) not raised again. (Keyword matching — run with Gemini for semantic analysis.)`}
+  res.themes=[...new Set(res.results.map(r=>r.theme).filter(Boolean))];
+  return res;
+}
+function countCats(list){const c={New:0,Repeated:0,Persistent:0,Resolved:0,total:0};list.forEach(a=>{a.results.forEach(r=>{c[r.category]++;c.total++});c.Resolved+=a.resolved.length});return c}
+function defaultCompare(y){const ys=sortedYears().filter(x=>yearNum(x)<yearNum(y));const p=prevYear(y);return ys.includes(p)?[p]:ys.slice(-1)}
+
+function renderAnalysis(){
+  const ys=sortedYears();
+  if(!ys.length){$("#view").innerHTML=`<div class="card"><h2>No data yet</h2><button class="btn primary" data-go="plan">Add academic year</button></div>`;return}
+  const y=UI.year,s=UI.sem;const earlier=ys.filter(x=>x!==y);
+  if(!UI.aCompare||UI.aCompare._for!==y){UI.aCompare=defaultCompare(y);UI.aCompare._for=y}
+  const cs=coursesFor(y,s);const ai=hasKey();if(!ai)UI.engine="local";
+  const list=Object.values(D.analyses).filter(a=>a.mode===UI.aMode&&a.year===y&&a.sem===s).sort((a,b)=>a.code.localeCompare(b.code));
+  $("#view").innerHTML=`
+  <div class="card noprint">
+    <h2>Comparative analysis</h2>
+    <p class="sub">Each end-semester comment is matched against earlier feedback by meaning and labelled <span class="badge b-New">New</span> (not raised before), <span class="badge b-Repeated">Repeated</span> (raised in one earlier round), or <span class="badge b-Persistent">Persistent</span> (raised in two or more earlier rounds, e.g. at mid-semester and last year). Earlier comments that are no longer raised are listed as <span class="badge b-Resolved">Resolved</span>.</p>
+    <div class="row" style="align-items:flex-end">
+      <label class="f">Academic year<select id="aYear">${ys.map(x=>`<option ${x===y?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
+      <label class="f">Semester<select id="aSem">${D.years[y].semesters.map(x=>`<option ${x===s?"selected":""}>${esc(x)}</option>`).join("")}</select></label>
+      <label class="f">Course<select id="aCourse"><option value="__all">All courses (${cs.length})</option>${cs.map(c=>`<option value="${esc(c.code)}" ${UI.aCourse===c.code?"selected":""}>${esc(c.code)} – ${esc(c.name)}</option>`).join("")}</select></label>
+      <label class="f">Engine<select id="aEngine"><option value="ai" ${UI.engine==="ai"?"selected":""} ${ai?"":"disabled"}>Gemini semantic AI analysis${ai?"":" (add key in Setup)"}</option><option value="local" ${UI.engine==="local"?"selected":""}>Quick keyword matching (offline)</option></select></label>
+    </div>
+    <h3 style="margin-top:16px">Comparison</h3>
+    <div class="chips">${Object.entries(MODES).map(([k,m])=>`<button class="chip ${UI.aMode===k?"on":""}" data-mode="${k}">${m.label}</button>`).join("")}</div>
+    <p class="small muted" style="margin:6px 0 0">${MODES[UI.aMode].desc}</p>
+    ${UI.aMode!=="midend"?`<div style="margin-top:10px"><span class="small" style="font-weight:600">Previous academic years (${esc(s)}):</span> ${earlier.length?`<div class="chips" style="margin-top:6px">${earlier.map(x=>`<button class="chip ${UI.aCompare.includes(x)?"on":""}" data-cmp="${esc(x)}">${esc(x)}</button>`).join("")}</div>`:`<span class="small muted">No other academic year loaded. Import last year's JSON or add its feedback to compare across years.</span>`}</div>`:""}
+    <div class="row" style="margin-top:16px"><button class="btn primary" id="runA">▶ Run analysis</button><span class="small muted" id="aMsg"></span></div>
+    <div class="progress hidden" id="aProg" style="margin-top:10px"><div></div></div>
+  </div>
+  ${list.length?analysisSummaryCard(list,y,s):""}
+  <div id="aResults">${list.filter(a=>UI.aCourse==="__all"||a.code===UI.aCourse).map(analysisCard).join("")||`<div class="card"><p class="muted">No ${MODES[UI.aMode].label.toLowerCase()} results yet for ${esc(s)} ${esc(y)}. Choose options above and run the analysis.</p></div>`}</div>`;
+  $("#aYear").onchange=e=>{UI.year=e.target.value;UI.sem=null;render()};
+  $("#aSem").onchange=e=>{UI.sem=e.target.value;render()};
+  $("#aCourse").onchange=e=>{UI.aCourse=e.target.value;render()};
+  $("#aEngine").onchange=e=>{UI.engine=e.target.value};
+  $("#runA").onclick=runAnalysis;
+}
+async function runAnalysis(){
+  if(UI.busy)return;const y=UI.year,s=UI.sem,mode=UI.aMode;const cmp=mode==="midend"?[]:UI.aCompare.slice();
+  if(mode!=="midend"&&!cmp.length&&mode==="yoy")return toast("Select at least one previous academic year");
+  const useAI=UI.engine==="ai"&&hasKey();
+  const codes=(UI.aCourse==="__all"?coursesFor(y,s).map(c=>c.code):[UI.aCourse]).filter(c=>fbGet(y,s,c).end.length);
+  if(!codes.length)return toast("No end-semester comments entered for the selected course(s) yet");
+  UI.busy=true;const btn=$("#runA");busyBtn(btn,true,"Analysing");const prog=$("#aProg");prog.classList.remove("hidden");const errs=[];
+  for(let i=0;i<codes.length;i++){$("#aMsg").textContent=`${codes[i]} (${i+1}/${codes.length})`;
+    try{const r=await analyseCourse(mode,y,s,codes[i],cmp,useAI);D.analyses[r.key]=r;save()}catch(e){errs.push(codes[i]+": "+e.message)}
+    prog.firstElementChild.style.width=((i+1)/codes.length*100)+"%"}
+  UI.busy=false;busyBtn(btn,false);render();toast(errs.length?`Done with ${errs.length} error(s): ${errs[0]}`:`Analysis complete for ${codes.length} course(s)`,errs.length?8000:3200);
+}
+function catBar(c){const t=c.New+c.Repeated+c.Persistent||1;return`<div class="bar" title="New ${c.New} · Repeated ${c.Repeated} · Persistent ${c.Persistent}"><span style="width:${c.New/t*100}%;background:var(--new)"></span><span style="width:${c.Repeated/t*100}%;background:var(--warn)"></span><span style="width:${c.Persistent/t*100}%;background:var(--bad)"></span></div>`}
+function analysisSummaryCard(list,y,s){const c=countCats(list);
+  return`<div class="card"><h3>${MODES[list[0].mode].label} · ${esc(s)} ${esc(y)} · ${list.length} course(s)</h3>
+  <div class="stats"><div class="stat"><div class="v">${c.total}</div><div class="l">End-semester comments</div></div>
+  <div class="stat"><div class="v" style="color:var(--new)">${c.New}</div><div class="l">New</div></div>
+  <div class="stat"><div class="v" style="color:var(--warn)">${c.Repeated}</div><div class="l">Repeated</div></div>
+  <div class="stat"><div class="v" style="color:var(--bad)">${c.Persistent}</div><div class="l">Persistent</div></div>
+  <div class="stat"><div class="v" style="color:var(--ok)">${c.Resolved}</div><div class="l">Resolved earlier comments</div></div></div>
+  <div class="legend"><span><span class="badge b-New">■</span> New</span><span><span class="badge b-Repeated">■</span> Repeated</span><span><span class="badge b-Persistent">■</span> Persistent</span></div></div>`}
+function analysisCard(a){const c=countCats([a]);
+  return`<div class="card" data-akey="${esc(a.key)}">
+  <div class="section-h"><div><h3 style="margin:0">${esc(a.code)} · ${esc(courseName(a.code))}</h3>
+    <div class="small muted">${MODES[a.mode].label}${a.compareYears.length?" · vs "+a.compareYears.map(esc).join(", "):""} · ${esc(a.method)} · ${new Date(a.created).toLocaleString()}</div></div>
+    <div class="kv"><span class="badge b-New">${c.New} new</span><span class="badge b-Repeated">${c.Repeated} repeated</span><span class="badge b-Persistent">${c.Persistent} persistent</span><span class="badge b-Resolved">${c.Resolved} resolved</span><button class="icon-btn noprint" data-act="del-analysis" title="Delete this result">✕</button></div></div>
+  ${a.summary?`<p style="margin:6px 0 10px">${esc(a.summary)}</p>`:""}
+  ${a.results.length?`<div class="tablewrap"><table class="t"><thead><tr><th style="width:24%">End-semester comment</th><th style="width:11%">Category</th><th style="width:26%">Matched earlier comments</th><th style="width:12%">Theme</th><th style="width:11%">Earlier action</th><th>Rationale</th></tr></thead><tbody>
+  ${a.results.map((r,i)=>`<tr data-ri="${i}"><td>${esc(r.area)}${r.action?`<div class="small muted">Planned: ${esc(r.action)}</div>`:""}</td>
+    <td><select data-act="cat" class="small" aria-label="Category">${CATS.map(x=>`<option ${x===r.category?"selected":""}>${x}</option>`).join("")}</select><div style="margin-top:4px"><span class="badge b-${r.category}">${r.category}</span>${r.category!==r.autoCategory?' <span class="small muted">edited</span>':""}</div>${r.severity?`<div class="small muted">Severity: ${esc(r.severity)}</div>`:""}</td>
+    <td>${r.matches.map(m=>`<div class="match"><b>${esc(m.label)} · ${m.sim}%</b><br>${esc(m.area)}${m.taken?`<br><span class="muted">Action taken: ${esc(m.taken)}</span>`:""}</div>`).join("")||'<span class="muted small">—</span>'}</td>
+    <td class="small">${esc(r.theme)||'<span class="muted">—</span>'}</td><td class="small">${esc(r.effectiveness)}</td><td class="small">${esc(r.rationale)}</td></tr>`).join("")}</tbody></table></div>`:""}
+  ${a.resolved.length?`<details style="margin-top:10px"><summary><b>Resolved / not raised again (${a.resolved.length})</b></summary><div class="tablewrap"><table class="t"><thead><tr><th>Round</th><th>Earlier comment</th><th>Action taken</th><th>Note</th></tr></thead><tbody>${a.resolved.map(r=>`<tr><td class="small">${esc(r.label)}</td><td>${esc(r.area)}</td><td class="small">${esc(r.taken)||'<span class="muted">—</span>'}</td><td class="small">${esc(r.rationale)}</td></tr>`).join("")}</tbody></table></div></details>`:""}
+  ${a.recommendations?.length?`<div style="margin-top:10px"><b>Recommendations</b><ul class="recs">${a.recommendations.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+  </div>`}
+
+/* ---------- Step 4: Report & export ---------- */
+function renderReport(){
+  const ys=sortedYears();const y=UI.year,s=UI.sem;
+  const list=y?Object.values(D.analyses).filter(a=>a.mode===UI.aMode&&a.year===y&&a.sem===s).sort((a,b)=>a.code.localeCompare(b.code)):[];
+  const c=countCats(list);const ek=`${UI.aMode}|${y}|${s}`;const ex=D.exec[ek];
+  const themeCount={};list.forEach(a=>a.results.forEach(r=>{if(r.theme){const t=r.theme.trim();themeCount[t]=themeCount[t]||{n:0,p:0,courses:new Set()};themeCount[t].n++;if(r.category!=="New")themeCount[t].p++;themeCount[t].courses.add(a.code)}}));
+  const themes=Object.entries(themeCount).sort((a,b)=>b[1].p-a[1].p||b[1].n-a[1].n).slice(0,15);
+  const totalItems=ys.reduce((n,yy)=>n+Object.values(D.feedback[yy]||{}).reduce((m,sem)=>m+Object.values(sem).reduce((k,r)=>k+r.mid.length+r.end.length,0),0),0);
+  const actStats=(()=>{let t=0,done=0;coursesFor(y,s).forEach(cc=>{const r=fbGet(y,s,cc.code);r.mid.concat(r.end).forEach(it=>{if(it.status!=="Not applicable"){t++;if(it.status==="Completed")done++}})});return{t,done}})();
+  $("#view").innerHTML=`
+  <div class="card noprint">
+    <h2>Save and continue later</h2>
+    <p class="sub">The JSON file holds every academic year, study plan, feedback row and analysis (${ys.length} year(s), ${totalItems} feedback rows, ${Object.keys(D.analyses).length} course analyses). Load it next time with <b>Import JSON</b> — importing merges with what is already open, so you can add more academic years.</p>
+    <div class="row"><button class="btn primary" id="rExport">⬇ Export work file (JSON)</button><button class="btn" id="rImport">⬆ Import JSON</button>
+    <button class="btn" id="rCsv">⬇ Analysis table (CSV)</button><button class="btn" id="rFbCsv">⬇ All feedback rows (CSV)</button><button class="btn" id="rPrint">🖨 Print / save report as PDF</button></div>
+  </div>
+  ${y?`<div class="card">
+    <div class="section-h"><div><h2>Feedback report · ${esc(s)} ${esc(y)}</h2><div class="small muted">${esc([D.institution,D.program].filter(Boolean).join(" · "))} ${esc(MODES[UI.aMode].label)}</div></div>
+    <div class="row noprint"><select id="rYear">${ys.map(x=>`<option ${x===y?"selected":""}>${esc(x)}</option>`).join("")}</select><select id="rSem">${D.years[y].semesters.map(x=>`<option ${x===s?"selected":""}>${esc(x)}</option>`).join("")}</select>
+      <select id="rMode">${Object.entries(MODES).map(([k,m])=>`<option value="${k}" ${k===UI.aMode?"selected":""}>${m.label}</option>`).join("")}</select></div></div>
+    ${list.length?`
+    <div class="stats"><div class="stat"><div class="v">${list.length}</div><div class="l">Courses analysed</div></div><div class="stat"><div class="v">${c.total}</div><div class="l">End-semester comments</div></div>
+    <div class="stat"><div class="v" style="color:var(--new)">${c.New}</div><div class="l">New</div></div><div class="stat"><div class="v" style="color:var(--warn)">${c.Repeated}</div><div class="l">Repeated</div></div>
+    <div class="stat"><div class="v" style="color:var(--bad)">${c.Persistent}</div><div class="l">Persistent</div></div><div class="stat"><div class="v" style="color:var(--ok)">${c.Resolved}</div><div class="l">Resolved</div></div>
+    <div class="stat"><div class="v">${actStats.t?Math.round(actStats.done/actStats.t*100):0}%</div><div class="l">Actions completed (${actStats.done}/${actStats.t})</div></div></div>
+    <h3>Executive summary</h3>
+    ${ex?`<div style="white-space:pre-wrap">${esc(ex.text)}</div><p class="small muted">Generated ${new Date(ex.created).toLocaleString()}</p>`:`<p class="muted small">Not generated yet.</p>`}
+    <button class="btn sm noprint" id="rExec" ${hasKey()?"":"disabled title='Add a Gemini key in Setup'"}>✨ ${ex?"Regenerate":"Generate"} executive summary with Gemini</button>
+    <h3 style="margin-top:18px">By course</h3>
+    <div class="tablewrap"><table class="t"><thead><tr><th>Course</th><th>Mid</th><th>End</th><th>New</th><th>Repeated</th><th>Persistent</th><th>Resolved</th><th>Mix</th></tr></thead><tbody>
+    ${list.map(a=>{const k=countCats([a]);const r=fbGet(y,s,a.code);return`<tr><td><b>${esc(a.code)}</b> <span class="small muted">${esc(courseName(a.code))}</span></td><td>${r.mid.length}</td><td>${r.end.length}</td><td>${k.New}</td><td>${k.Repeated}</td><td><b style="color:${k.Persistent?"var(--bad)":"inherit"}">${k.Persistent}</b></td><td>${k.Resolved}</td><td>${catBar(k)}</td></tr>`}).join("")}</tbody></table></div>
+    ${themes.length?`<h3 style="margin-top:18px">Recurring themes</h3><div class="tablewrap"><table class="t"><thead><tr><th>Theme</th><th>Comments</th><th>Repeated / persistent</th><th>Courses</th></tr></thead><tbody>${themes.map(([t,v])=>`<tr><td>${esc(t)}</td><td>${v.n}</td><td>${v.p}</td><td class="small">${[...v.courses].map(esc).join(", ")}</td></tr>`).join("")}</tbody></table></div>`:""}
+    <h3 style="margin-top:18px">Persistent and repeated comments</h3>
+    ${list.flatMap(a=>a.results.filter(r=>r.category!=="New").map(r=>({a,r}))).map(({a,r})=>`<div class="match" style="padding:8px 10px"><span class="badge b-${r.category}">${r.category}</span> <b>${esc(a.code)}</b> — ${esc(r.area)}<div class="small muted">Seen in: ${r.matches.map(m=>esc(m.label)).join(", ")}${r.effectiveness?" · Earlier action: "+esc(r.effectiveness):""}</div></div>`).join("")||'<p class="muted small">None.</p>'}
+    `:`<p class="muted">No ${esc(MODES[UI.aMode].label.toLowerCase())} results for this term yet. <a href="#" data-go="analysis">Run the analysis</a>.</p>`}
+  </div>
+  <div class="hidden print-detail"></div>
+  ${list.map(analysisCard).join("")}`:""}`;
+  $("#rExport").onclick=exportJSON;$("#rImport").onclick=()=>$("#jsonPicker").click();$("#rPrint").onclick=()=>window.print();
+  $("#rCsv").onclick=exportAnalysisCSV;$("#rFbCsv").onclick=exportFeedbackCSV;
+  if(!y)return;
+  $("#rYear").onchange=e=>{UI.year=e.target.value;UI.sem=null;render()};$("#rSem").onchange=e=>{UI.sem=e.target.value;render()};$("#rMode").onchange=e=>{UI.aMode=e.target.value;render()};
+  const eb=$("#rExec");if(eb)eb.onclick=async()=>{busyBtn(eb,true,"Writing summary");
+    try{const payload=list.map(a=>({course:a.code+" "+courseName(a.code),summary:a.summary,counts:countCats([a]),persistent_or_repeated:a.results.filter(r=>r.category!=="New").map(r=>({comment:r.area,category:r.category,theme:r.theme,earlier_action:r.effectiveness})),resolved:a.resolved.map(r=>r.area)}));
+      const t=await gemini([{text:`Write an executive summary (about 250-350 words, plain text, short paragraphs and a final list of 3-6 priority actions with "- " bullets) for the college quality committee about student feedback for ${s} ${y}${D.program?" in "+D.program:""}. Comparison: ${MODES[UI.aMode].label}${list[0].compareYears.length?" vs "+list[0].compareYears.join(", "):""}. Highlight cross-course persistent themes, which actions worked and which did not, and newly emerging concerns. Data:\n${JSON.stringify(payload)}`}],{json:false,temperature:0.3});
+      D.exec[ek]={text:t.trim(),created:new Date().toISOString()};save();render()}catch(e){toast("❌ "+e.message,6000);busyBtn(eb,false)}};
+}
+function fileStem(){return("qualitrack_"+[D.institution,D.program].filter(Boolean).join("_")).replace(/[^\w-]+/g,"-").replace(/-+/g,"-").slice(0,60)+"_"+new Date().toISOString().slice(0,10)}
+function exportJSON(){download(fileStem()+".json",JSON.stringify({...D,exported:new Date().toISOString()},null,2),"application/json");toast("Work file downloaded")}
+const csvCell=v=>{const s=String(v??"");return/[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s};
+function exportAnalysisCSV(){const rows=[["Mode","Academic year","Semester","Course","End-semester comment","Planned action","Action taken","Category","Auto category","Matched rounds","Matched comments","Theme","Severity","Earlier action effectiveness","Rationale","Method"]];
+  Object.values(D.analyses).forEach(a=>a.results.forEach(r=>rows.push([MODES[a.mode].label,a.year,a.sem,a.code,r.area,r.action,r.taken,r.category,r.autoCategory,r.matches.map(m=>m.label+" ("+m.sim+"%)").join("; "),r.matches.map(m=>m.area).join(" || "),r.theme,r.severity,r.effectiveness,r.rationale,a.method])));
+  Object.values(D.analyses).forEach(a=>a.resolved.forEach(r=>rows.push([MODES[a.mode].label,a.year,a.sem,a.code,r.area,"",r.taken,"Resolved","Resolved",r.label,"","","","",r.rationale,a.method])));
+  if(rows.length<2)return toast("No analysis results to export yet");download(fileStem()+"_analysis.csv","﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv")}
+function exportFeedbackCSV(){const rows=[["Academic year","Semester","Course code","Course name","Round","Area of improvement","Action to be taken","Action taken","Status"]];
+  sortedYears().forEach(y=>Object.entries(D.feedback[y]||{}).forEach(([s,cs])=>Object.entries(cs).forEach(([c,r])=>["mid","end"].forEach(k=>r[k].forEach(it=>rows.push([y,s,c,courseName(c),k==="mid"?"Mid-semester":"End-semester",it.area,it.action,it.taken,it.status]))))));
+  if(rows.length<2)return toast("No feedback rows yet");download(fileStem()+"_feedback.csv","﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv")}
+
+/* ============================== Import ============================== */
+async function importJSONFile(f){
+  if(CLOUD&&!canEdit())return toast("Only editors and admins can import data");
+  let j;try{j=JSON.parse(await f.text())}catch(e){return toast("❌ That file is not valid JSON")}
+  if(!j||j.schema!=="course-feedback-tracker"||!j.years)return toast("❌ Not a Course Feedback Tracker work file");
+  const empty=!Object.keys(D.years).length;
+  const doIt=mode=>{if(mode==="replace"||empty){D={...blank(),...j};delete D.exported}else mergeData(j);save();UI.year=null;UI.sem=null;UI.course=null;
+    toast(`Loaded ${f.name}: ${Object.keys(j.years).length} academic year(s)`);if(UI.step==="setup")UI.step="plan";render()};
+  if(empty)return doIt("replace");
+  modal(`<h3>Import ${esc(f.name)}</h3><p>The file has academic year(s) <b>${Object.keys(j.years).map(esc).join(", ")}</b>. You already have <b>${sortedYears().map(esc).join(", ")}</b> open.</p>
+  <p class="small muted"><b>Merge</b> adds the file's years, courses, feedback rows and analyses to what is open (rows with the same ID are updated from the file). <b>Replace</b> discards what is open.</p>
+  <div class="row" style="justify-content:flex-end"><button class="btn" data-close>Cancel</button>${CLOUD&&!isAdmin()?"":`<button class="btn danger" id="imRep">Replace</button>`}<button class="btn primary" id="imMerge">Merge</button></div>`,(m,close)=>{
+    m.querySelector("#imMerge").onclick=()=>{close();doIt("merge")};const rb=m.querySelector("#imRep");if(rb)rb.onclick=()=>{close();doIt("replace")}});
+}
+function mergeData(j){
+  if(!D.institution)D.institution=j.institution||"";if(!D.program)D.program=j.program||"";
+  Object.entries(j.years||{}).forEach(([y,yr])=>{if(!D.years[y])D.years[y]={semesters:[],courses:[]};const t=D.years[y];
+    (yr.semesters||[]).forEach(s=>{if(!t.semesters.includes(s))t.semesters.push(s)});
+    (yr.courses||[]).forEach(c=>{const ex=t.courses.find(x=>x.code.toLowerCase()===String(c.code).toLowerCase());if(ex){if(c.name)ex.name=c.name}else t.courses.push({...c})})});
+  Object.entries(j.feedback||{}).forEach(([y,sems])=>Object.entries(sems).forEach(([s,cs])=>Object.entries(cs).forEach(([c,r])=>{const t=fb(y,s,c);
+    ["mid","end"].forEach(k=>(r[k]||[]).forEach(it=>{const i=t[k].findIndex(x=>x.id===it.id);if(i>=0)t[k][i]={...it};else t[k].push({...it})}))})));
+  Object.assign(D.analyses,j.analyses||{});Object.assign(D.exec,j.exec||{});
+}
+
+/* ============================== Events ============================== */
+document.addEventListener("click",e=>{
+  const st=e.target.closest("[data-step]");if(st)return go(st.dataset.step);
+  const g=e.target.closest("[data-go]");if(g&&!g.disabled){e.preventDefault();return go(g.dataset.go)}
+  if(!e.target.closest("#view"))return;
+  const yb=e.target.closest("[data-year]");if(yb){UI.year=yb.dataset.year;UI.sem=null;return render()}
+  const sb=e.target.closest("[data-sem]");if(sb){const yr=D.years[UI.year],s=sb.dataset.sem;const i=yr.semesters.indexOf(s);if(i>=0){if(yr.semesters.length===1)return toast("Keep at least one semester");yr.semesters.splice(i,1)}else{yr.semesters.push(s);yr.semesters.sort((a,b)=>(DEFAULT_SEMS.indexOf(a)+99)%99-(DEFAULT_SEMS.indexOf(b)+99)%99)}save();return render()}
+  const cb=e.target.closest("[data-course]");if(cb){UI.course=cb.dataset.course;return render()}
+  const mb=e.target.closest("[data-mode]");if(mb){UI.aMode=mb.dataset.mode;return render()}
+  const cm=e.target.closest("[data-cmp]");if(cm){const v=cm.dataset.cmp,a=UI.aCompare,i=a.indexOf(v);i>=0?a.splice(i,1):a.push(v);return render()}
+  const act=e.target.closest("[data-act]");if(!act||act.tagName==="SELECT")return;const k=act.closest("[data-kind]")?.dataset.kind;
+  switch(act.dataset.act){
+    case"add-item":{const r=curRec();r[k].push(newItem());save();render();const ts=document.querySelectorAll(`[data-kind="${k}"] textarea[data-f="area"]`);ts[ts.length-1]?.focus();break}
+    case"del-item":{const id=act.closest("[data-item]").dataset.item;const{list}=findItem(id);if(list){list.splice(list.findIndex(x=>x.id===id),1);save();render()}break}
+    case"clear-items":if(confirm(`Delete all ${KLABEL[k].toLowerCase()} rows for ${UI.course}?`)){curRec()[k]=[];save();render()}break;
+    case"upload-items":multiUploadModal({course:UI.course,round:k});break;
+    case"paste-items":pasteItems(k);break;
+    case"del-course":{const i=+act.closest("[data-ci]").dataset.ci;D.years[UI.year].courses.splice(i,1);save();render();break}
+    case"del-analysis":{const key=act.closest("[data-akey]").dataset.akey;if(confirm("Delete this analysis result?")){delete D.analyses[key];save();render()}break}
+  }
+});
+document.addEventListener("input",e=>{
+  const t=e.target;if(t.tagName==="TEXTAREA")autosize(t);
+  if(t.dataset.f){const id=t.closest("[data-item]")?.dataset.item;const{it}=findItem(id);if(it){it[t.dataset.f]=t.value;if(t.dataset.f==="taken"&&t.value.trim()&&it.status==="Not started"){it.status="In progress";const sel=t.closest("tr").querySelector('select[data-f="status"]');if(sel)sel.value="In progress"}save()}}
+  if(t.dataset.cf){const i=+t.closest("[data-ci]").dataset.ci;const c=D.years[UI.year].courses[i];const old=c.code;c[t.dataset.cf]=t.value.trim?t.value.trim():t.value;
+    if(t.dataset.cf==="code"&&old&&old!==c.code)renameCourse(UI.year,old,c.code);save()}
+});
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.dataset.f==="status"||t.dataset.cf==="semester")return t.dispatchEvent(new Event("input",{bubbles:true}));
+  if(t.dataset.act==="cat"){const key=t.closest("[data-akey]").dataset.akey;const ri=+t.closest("[data-ri]").dataset.ri;D.analyses[key].results[ri].category=t.value;save();render()}
+});
+let renameTimer=null;
+function renameCourse(y,from,to){clearTimeout(renameTimer);renameTimer=setTimeout(()=>{if(!to)return;Object.values(D.feedback[y]||{}).forEach(sem=>{if(sem[from]&&!sem[to]){sem[to]=sem[from];delete sem[from]}});save()},600)}
+$("#hdrExport").onclick=exportJSON;$("#hdrImport").onclick=()=>$("#jsonPicker").click();
+$("#jsonPicker").onchange=e=>{const f=e.target.files[0];e.target.value="";if(f)importJSONFile(f)};
+window.addEventListener("beforeunload",()=>{if(saveTimer)clearTimeout(saveTimer)});
+
+/* ============================== Boot ============================== */
+(async()=>{
+  if(CLOUD){render();try{await initCloud()}catch(e){$("#view").innerHTML=`<div class="card"><h2>Cannot reach the QualiTrack database</h2><p class="sub">${esc(e.message||e)}</p></div>`}return}
+  try{await IDB.open();const saved=await IDB.get("workspace");if(saved&&saved.schema==="course-feedback-tracker"){D={...blank(),...saved};
+    if(Object.keys(D.years).length){UI.step="plan";$("#saveState").textContent="Restored from this browser · "+(D.updated?new Date(D.updated).toLocaleString():"")}}}
+  catch(e){$("#saveState").textContent="Local database unavailable – use Export JSON"}
+  render();
+})();
+</script>
+</body>
+</html>
