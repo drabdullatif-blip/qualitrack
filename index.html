@@ -180,11 +180,12 @@ function coursesFor(y,s){const yr=D.years[y];if(!yr)return[];return yr.courses.f
 function courseName(code){for(const y of sortedYears().reverse()){const c=(D.years[y].courses||[]).find(x=>x.code===code);if(c&&c.name)return c.name}return""}
 
 /* ============================== Gemini ============================== */
-const KEY_NAME="cft_gemini_key";
-function getKey(){try{return localStorage.getItem(KEY_NAME)||sessionStorage.getItem(KEY_NAME)||memKey||""}catch(e){return memKey||""}}
+const KEY_BASE="cft_gemini_key";
+function keyName(){return KEY_BASE+(CLOUD&&CL.session?"_"+CL.session.user.id:"")}
+function getKey(){try{return localStorage.getItem(keyName())||sessionStorage.getItem(keyName())||memKey||""}catch(e){return memKey||""}}
 let memKey="";
-function setKey(k,remember){if(k!==memKey){modelCands=null;badModels.clear()}memKey=k;try{localStorage.removeItem(KEY_NAME);sessionStorage.removeItem(KEY_NAME);if(k)(remember?localStorage:sessionStorage).setItem(KEY_NAME,k)}catch(e){}}
-function hasKey(){return CLOUD?canEdit():!!getKey()}
+function setKey(k,remember){if(k!==memKey){modelCands=null;badModels.clear()}memKey=k;try{localStorage.removeItem(keyName());sessionStorage.removeItem(keyName());if(k)(remember?localStorage:sessionStorage).setItem(keyName(),k)}catch(e){}}
+function hasKey(){return CLOUD?(canEdit()&&!!getKey()):!!getKey()}
 
 /* Model is chosen automatically: the most capable Gemini model the key can use,
    falling back to the next one whenever a model is unavailable, not permitted or out of quota. */
@@ -207,8 +208,8 @@ async function getCandidates(key){
   return modelCands=ids;
 }
 async function gemini(parts,{json=true,temperature=0.2}={}){
-  if(CLOUD)return cloudGemini(parts,{json,temperature});
-  const key=getKey();if(!key)throw new Error("No Gemini API key. Add one in Setup.");
+  if(CLOUD&&!canEdit())throw new Error("AI features are available to editors and admins.");
+  const key=getKey();if(!key)throw new Error("Add your own Gemini API key in Setup to use the AI features.");
   const body={contents:[{role:"user",parts}],generationConfig:{temperature}};
   if(json)body.generationConfig.responseMimeType="application/json";
   const cands=await getCandidates(key);let lastErr=null;
@@ -312,7 +313,7 @@ async function initCloud(){
   const{data:{session}}=await CL.sb.auth.getSession();
   await onSession(session);
   CL.sb.auth.onAuthStateChange((ev,s)=>{
-    if(ev==="SIGNED_OUT"){CL.session=null;CL.profile=null;CL.ready=false;D=blank();render();return}
+    if(ev==="SIGNED_OUT"){memKey="";modelCands=null;CL.session=null;CL.profile=null;CL.ready=false;D=blank();render();return}
     if(ev==="PASSWORD_RECOVERY"){CL.recovery=true;CL.session=s;render();return}
     if(s&&!CL.session)setTimeout(()=>onSession(s),0);else if(s)CL.session=s;
   });
@@ -407,8 +408,7 @@ function renderSetupCloud(){
   const p=CL.profile||{};
   $("#view").innerHTML=`
   <div class="card"><h2>Your account</h2><p class="sub" style="margin:0">Signed in as <b>${esc(CL.session.user.email)}</b> · role <span class="badge b-muted">${esc(p.role)}</span>. ${ROLE_TXT[p.role]||""}</p></div>
-  <div class="card"><h2>AI analysis</h2><p class="sub">Gemini runs on the college's server key, so nobody needs a personal API key. The most capable available model is chosen automatically, with automatic fallback.</p>
-    ${canEdit()?`<div class="row"><button class="btn" id="aiTest">Test AI connection</button><span class="small muted" id="aiStatus"></span></div>`:`<p class="small muted" style="margin:0">AI features are available to editors and admins.</p>`}</div>
+  ${keyCardHTML()}
   <div class="card"><h2>Institution details</h2><p class="sub">Shown in reports${isAdmin()?"":" (set by an admin)"}.</p><div class="grid2">
     <label class="f">College / institution<input type="text" id="inst" value="${esc(D.institution)}" ${isAdmin()?"":"readonly"}></label>
     <label class="f">Program<input type="text" id="prog" value="${esc(D.program)}" ${isAdmin()?"":"readonly"}></label></div></div>
@@ -417,7 +417,7 @@ function renderSetupCloud(){
     <div class="row" style="align-items:flex-end;margin-bottom:12px"><label class="f" style="flex:1;min-width:220px">Allowed e-mail domains (comma-separated)<input type="text" id="domains" placeholder="loading…"></label><button class="btn" id="saveDomains">Save domains</button></div>
     <div class="tablewrap" id="usersTbl"><p class="muted small">Loading users…</p></div></div>`:""}
   <div class="card"><div class="row"><button class="btn primary" data-go="plan">Continue → Academic year &amp; study plan</button></div></div>`;
-  const t=$("#aiTest");if(t)t.onclick=async e=>{busyBtn(e.target,true,"Testing");try{const r=await gemini([{text:'Reply with JSON {"ok":true}'}]);$("#aiStatus").textContent=r.ok?"✅ Working · model selected automatically: "+lastModel:"⚠️ Unexpected reply"}catch(err){$("#aiStatus").textContent="❌ "+err.message}busyBtn(e.target,false)};
+  bindKeyCard();
   if(isAdmin()){$("#inst").oninput=e=>{D.institution=e.target.value;save()};$("#prog").oninput=e=>{D.program=e.target.value;save()};loadUsers()}
 }
 async function loadUsers(){
@@ -490,13 +490,11 @@ function render(){
 }
 
 /* ---------- Step 0: Setup ---------- */
-function renderSetup(){
-  if(CLOUD)return renderSetupCloud();
-  const k=getKey();let remembered=false;try{remembered=!!localStorage.getItem(KEY_NAME)}catch(e){}
-  $("#view").innerHTML=`
-  <div class="card">
-    <h2>🔑 Get a Gemini API key</h2>
-    <p class="sub">The AI reads uploaded reports, extracts the feedback, and runs the semantic comparison. Without a key you can still type data and use quick keyword matching.</p>
+function keyCardHTML(){
+  const k=getKey();let remembered=false;try{remembered=!!localStorage.getItem(keyName())}catch(e){}
+  return `<div class="card">
+    <h2>🔑 Your Gemini API key</h2>
+    <p class="sub">The AI reads uploaded reports, extracts the feedback, and runs the semantic comparison. ${CLOUD?"<b>Each person uses their own free key</b>: it is kept only in this browser, sent straight to Google, and never saved to the shared database or seen by other users. "+(canEdit()?"":"(AI features are available to editors and admins.) "):"Without a key you can still type data and use quick keyword matching."}</p>
     <ol class="howto">
       <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio → API keys</a> with a personal Google account (Workspace / university accounts are usually blocked).</li>
       <li>Click <b>Create API key</b>, copy it and paste it below.</li>
@@ -513,7 +511,20 @@ function renderSetup(){
     <label class="row small" style="margin-top:10px"><input type="checkbox" id="keyRemember" ${remembered?"checked":""}> Remember the key on this device (otherwise only until this tab closes)</label>
     <p class="small muted" id="keyStatus" style="margin:8px 0 0">${k?"✅ A key is set."+(lastModel?" Using "+esc(lastModel)+".":""):"No key set."}</p>
     <p class="small muted" style="margin:4px 0 0">The app picks the most capable Gemini model your key can use, and moves to the next one automatically if a model is unavailable or out of quota.</p>
-  </div>
+  </div>`;
+}
+function bindKeyCard(){
+  $("#keyShow").onclick=()=>{const i=$("#apiKey");i.type=i.type==="password"?"text":"password";$("#keyShow").textContent=i.type==="password"?"Show":"Hide"};
+  $("#keySave").onclick=()=>{setKey($("#apiKey").value.trim(),$("#keyRemember").checked);$("#keyStatus").textContent=getKey()?"✅ Key saved"+($("#keyRemember").checked?" on this device.":" for this tab only."):"No key set.";};
+  $("#keyRemember").onchange=()=>{if(getKey())setKey(getKey(),$("#keyRemember").checked)};
+  $("#keyClear").onclick=()=>{setKey("",false);$("#apiKey").value="";$("#keyStatus").textContent="Key removed."};
+  $("#keyTest").onclick=async e=>{if($("#apiKey").value.trim()&&$("#apiKey").value.trim()!==getKey())setKey($("#apiKey").value.trim(),$("#keyRemember").checked);busyBtn(e.target,true,"Testing");
+    try{const r=await gemini([{text:'Reply with JSON {"ok":true}'}]);$("#keyStatus").textContent=r.ok?"✅ The key works. Model selected automatically: "+lastModel+".":"⚠️ Unexpected reply."}catch(err){$("#keyStatus").textContent="❌ "+err.message}busyBtn(e.target,false)};
+}
+function renderSetup(){
+  if(CLOUD)return renderSetupCloud();
+  $("#view").innerHTML=`
+  ${keyCardHTML()}
   <div class="card">
     <h2>Institution details <span class="muted small">(optional)</span></h2>
     <p class="sub">Shown in reports and in the exported file name.</p>
@@ -528,12 +539,7 @@ function renderSetup(){
     <div class="row"><button class="btn primary" data-go="plan">Continue → Academic year & study plan</button>
     <button class="btn danger" id="resetAll">Start a new empty workspace</button></div>
   </div>`;
-  $("#keyShow").onclick=()=>{const i=$("#apiKey");i.type=i.type==="password"?"text":"password";$("#keyShow").textContent=i.type==="password"?"Show":"Hide"};
-  $("#keySave").onclick=()=>{setKey($("#apiKey").value.trim(),$("#keyRemember").checked);$("#keyStatus").textContent=getKey()?"✅ Key saved"+($("#keyRemember").checked?" on this device.":" for this tab only."):"No key set.";};
-  $("#keyRemember").onchange=()=>{if(getKey())setKey(getKey(),$("#keyRemember").checked)};
-  $("#keyClear").onclick=()=>{setKey("",false);$("#apiKey").value="";$("#keyStatus").textContent="Key removed."};
-  $("#keyTest").onclick=async e=>{if($("#apiKey").value.trim()&&$("#apiKey").value.trim()!==getKey())setKey($("#apiKey").value.trim(),$("#keyRemember").checked);busyBtn(e.target,true,"Testing");
-    try{const r=await gemini([{text:'Reply with JSON {"ok":true}'}]);$("#keyStatus").textContent=r.ok?"✅ The key works. Model selected automatically: "+lastModel+".":"⚠️ Unexpected reply."}catch(err){$("#keyStatus").textContent="❌ "+err.message}busyBtn(e.target,false)};
+  bindKeyCard();
   $("#inst").oninput=e=>{D.institution=e.target.value;save()};$("#prog").oninput=e=>{D.program=e.target.value;save()};
   $("#resetAll").onclick=()=>{if(confirm("Clear all academic years, feedback and analyses from this browser? Export JSON first if you want to keep them.")){D=blank();save();toast("Workspace cleared");render()}};
 }
