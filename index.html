@@ -124,6 +124,7 @@ body.ro .edit-only{display:none!important}
   <div class="top-inner">
     <div class="brand">QualiTrack<small id="hdrCtx">Course feedback &amp; action tracker</small></div>
     <span class="savestate" id="saveState">Not saved yet</span>
+    <span id="aiBadge" class="small"></span>
     <span id="userBox" class="small"></span>
     <button class="btn sm edit-only" id="hdrImport" title="Load a JSON file saved earlier">⬆ Import JSON</button>
     <button class="btn sm primary" id="hdrExport" title="Download all work as a JSON file">⬇ Export JSON</button>
@@ -184,13 +185,21 @@ const KEY_BASE="cft_gemini_key";
 function keyName(){return KEY_BASE+(CLOUD&&CL.session?"_"+CL.session.user.id:"")}
 function getKey(){try{return localStorage.getItem(keyName())||sessionStorage.getItem(keyName())||memKey||""}catch(e){return memKey||""}}
 let memKey="";
-function setKey(k,remember){if(k!==memKey){modelCands=null;badModels.clear()}memKey=k;try{localStorage.removeItem(keyName());sessionStorage.removeItem(keyName());if(k)(remember?localStorage:sessionStorage).setItem(keyName(),k)}catch(e){}}
+function setKey(k,remember){if(k!==getKey()){modelCands=null;badModels.clear()}memKey=k;try{localStorage.removeItem(keyName());sessionStorage.removeItem(keyName());if(k)(remember?localStorage:sessionStorage).setItem(keyName(),k)}catch(e){}}
 function hasKey(){return CLOUD?(canEdit()&&!!getKey()):!!getKey()}
 
 /* Model is chosen automatically: the most capable Gemini model the key can use,
    falling back to the next one whenever a model is unavailable, not permitted or out of quota. */
 const MODEL_FALLBACK=["gemini-3-pro-preview","gemini-2.5-pro","gemini-3-flash-preview","gemini-2.5-flash","gemini-2.0-flash","gemini-2.5-flash-lite"];
-let modelCands=null,lastModel="";const badModels=new Set();
+let modelCands=null,lastModel="";
+/* Models that failed for this key are remembered for 6 hours (also across page reloads), so the app goes straight to one that works. */
+const badModels={TTL:6*3600e3,
+  _load(){try{const o=JSON.parse(localStorage.getItem("cft_bad_models")||"{}");return o.fp===keyFp()?o.m||{}:{}}catch(e){return{}}},
+  _save(m){try{localStorage.setItem("cft_bad_models",JSON.stringify({fp:keyFp(),m}))}catch(e){}},
+  has(x){const t=this._load()[x];return !!t&&Date.now()-t<this.TTL},
+  add(x){const m=this._load();m[x]=Date.now();this._save(m)},
+  clear(){try{localStorage.removeItem("cft_bad_models")}catch(e){}}};
+function keyFp(){const k=getKey();return k?k.slice(-6)+k.length:""}
 function scoreModel(id){
   const m=id.match(/^gemini-(\d+(?:\.\d+)?)-(pro|flash-lite|flash)(.*)$/);if(!m)return -1;
   if(/tts|image|audio|live|embed|thinking|computer|native|robotic|customtool|search|learnlm/.test(m[3]))return -1;
@@ -313,7 +322,7 @@ async function initCloud(){
   const{data:{session}}=await CL.sb.auth.getSession();
   await onSession(session);
   CL.sb.auth.onAuthStateChange((ev,s)=>{
-    if(ev==="SIGNED_OUT"){memKey="";modelCands=null;CL.session=null;CL.profile=null;CL.ready=false;D=blank();render();return}
+    if(ev==="SIGNED_OUT"){memKey="";modelCands=null;KS.started=false;KS.key="";KS.state="none";$("#aiBadge").innerHTML="";CL.session=null;CL.profile=null;CL.ready=false;D=blank();render();return}
     if(ev==="PASSWORD_RECOVERY"){CL.recovery=true;CL.session=s;render();return}
     if(s&&!CL.session)setTimeout(()=>onSession(s),0);else if(s)CL.session=s;
   });
@@ -487,6 +496,7 @@ function render(){
   ({setup:renderSetup,plan:renderPlan,feedback:renderFeedback,analysis:renderAnalysis,report:renderReport})[UI.step]();
   document.querySelectorAll("#view textarea").forEach(autosize);
   renderUserBox();applyReadOnly();
+  if(!KS.started){KS.started=true;checkKey(false)}else showKeyStatus();
 }
 
 /* ---------- Step 0: Setup ---------- */
@@ -509,17 +519,56 @@ function keyCardHTML(){
       <button class="btn danger" id="keyClear">Remove</button>
     </div>
     <label class="row small" style="margin-top:10px"><input type="checkbox" id="keyRemember" ${remembered?"checked":""}> Remember the key on this device (otherwise only until this tab closes)</label>
-    <p class="small muted" id="keyStatus" style="margin:8px 0 0">${k?"✅ A key is set."+(lastModel?" Using "+esc(lastModel)+".":""):"No key set."}</p>
+    <p class="small" id="keyStatus" style="margin:8px 0 0">${keyStatusHTML()}</p>
     <p class="small muted" style="margin:4px 0 0">The app picks the most capable Gemini model your key can use, and moves to the next one automatically if a model is unavailable or out of quota.</p>
   </div>`;
 }
+const KS={key:"",state:"none",msg:"",model:"",started:false};
+const KS_ICON={none:"🔑",checking:'<span class="spinner"></span>',ok:"✅",bad:"❌"};
+function keyStatusHTML(){
+  if(!getKey())return'<span style="color:var(--muted)">🔑 No key yet. Paste your key above and click <b>Save key</b>; it is checked automatically.</span>';
+  const col={ok:"var(--ok)",bad:"var(--bad)",checking:"var(--muted)",none:"var(--muted)"}[KS.state];
+  return`<span style="color:${col};font-weight:600">${KS_ICON[KS.state]} ${esc(KS.msg||"Key saved.")}</span>`;
+}
+function showKeyStatus(){
+  const el=$("#keyStatus");if(el)el.innerHTML=keyStatusHTML();
+  const b=$("#aiBadge");if(!b)return;
+  if(CLOUD&&!CL.session){b.innerHTML="";return}
+  const t=!getKey()?["🔑","AI: add your key","var(--warn)"]:{checking:["⏳","AI: checking key…","var(--muted)"],ok:["✅","AI ready","var(--ok)"],bad:["❌","AI: key problem","var(--bad)"],none:["🔑","AI: key saved","var(--muted)"]}[KS.state];
+  b.innerHTML=`<a href="#" data-step="setup" title="${esc(KS.msg||"Gemini API key")}" style="color:${t[2]};text-decoration:none;font-weight:600">${t[0]} ${t[1]}</a>`;
+}
+function friendlyKeyError(m){
+  if(/API key not valid|API_KEY_INVALID|invalid api key/i.test(m))return"Google says this key is not valid. Copy it again from Google AI Studio and paste it here.";
+  if(/permission|PERMISSION_DENIED|has not been used|disabled/i.test(m))return"This key isn't allowed to use the Gemini API. Create a new key in Google AI Studio.";
+  if(/quota|exhausted|429/i.test(m))return"The key works, but its free quota is used up for now. Try again later or turn on billing.";
+  if(/Failed to fetch|NetworkError|network/i.test(m))return"Couldn't reach Google. Check your internet connection.";
+  return m;
+}
+async function checkKey(force){
+  const k=getKey();
+  if(!k){KS.key="";KS.state="none";KS.msg="";showKeyStatus();return}
+  if(!force&&KS.key===k&&(KS.state==="ok"||KS.state==="checking"))return showKeyStatus();
+  KS.key=k;KS.state="checking";KS.msg="Checking your key with Google…";showKeyStatus();
+  try{
+    const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",{headers:{"x-goog-api-key":k}});
+    if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(j?.error?.message||("Google replied "+r.status))}
+    if(KS.key!==k)return;
+    if(CLOUD&&!canEdit()){KS.state="ok";KS.msg="Key is valid. (AI features are available to editors and admins.)";return showKeyStatus()}
+    KS.msg="Key accepted by Google · finding the best model you can use…";showKeyStatus();
+    const t=await gemini([{text:'Reply with JSON {"ok":true}'}]);
+    if(KS.key!==k)return;
+    KS.state="ok";KS.model=lastModel;KS.msg="Working · model selected automatically: "+lastModel;
+  }catch(e){if(KS.key!==k)return;KS.state="bad";KS.msg=friendlyKeyError(e.message||String(e))}
+  showKeyStatus();
+}
 function bindKeyCard(){
   $("#keyShow").onclick=()=>{const i=$("#apiKey");i.type=i.type==="password"?"text":"password";$("#keyShow").textContent=i.type==="password"?"Show":"Hide"};
-  $("#keySave").onclick=()=>{setKey($("#apiKey").value.trim(),$("#keyRemember").checked);$("#keyStatus").textContent=getKey()?"✅ Key saved"+($("#keyRemember").checked?" on this device.":" for this tab only."):"No key set.";};
+  $("#keySave").onclick=()=>{setKey($("#apiKey").value.trim(),$("#keyRemember").checked);checkKey(true)};
+  $("#apiKey").onkeydown=e=>{if(e.key==="Enter")$("#keySave").click()};
   $("#keyRemember").onchange=()=>{if(getKey())setKey(getKey(),$("#keyRemember").checked)};
-  $("#keyClear").onclick=()=>{setKey("",false);$("#apiKey").value="";$("#keyStatus").textContent="Key removed."};
-  $("#keyTest").onclick=async e=>{if($("#apiKey").value.trim()&&$("#apiKey").value.trim()!==getKey())setKey($("#apiKey").value.trim(),$("#keyRemember").checked);busyBtn(e.target,true,"Testing");
-    try{const r=await gemini([{text:'Reply with JSON {"ok":true}'}]);$("#keyStatus").textContent=r.ok?"✅ The key works. Model selected automatically: "+lastModel+".":"⚠️ Unexpected reply."}catch(err){$("#keyStatus").textContent="❌ "+err.message}busyBtn(e.target,false)};
+  $("#keyClear").onclick=()=>{setKey("",false);$("#apiKey").value="";checkKey(true)};
+  $("#keyTest").onclick=()=>{const v=$("#apiKey").value.trim();if(v&&v!==getKey())setKey(v,$("#keyRemember").checked);checkKey(true)};
+  checkKey(false);
 }
 function renderSetup(){
   if(CLOUD)return renderSetupCloud();
